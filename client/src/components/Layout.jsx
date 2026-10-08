@@ -7,7 +7,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import { Avatar, Loading } from './ui';
-import { firstName, timeAgo } from '../utils/format';
+import { timeAgo } from '../utils/format';
 import TopBar from './portal/TopBar';
 import Footer from './portal/Footer';
 import { Wordmark } from './portal/Brand';
@@ -117,7 +117,6 @@ function Breadcrumb({ items, pathname }) {
         {deeper ? <Link to={section.to} className="hover:text-indigo-800 hover:underline">{section.label}</Link> : <span className="font-medium text-slate-700">{section.label}</span>}
       </>}
       {deeper && <><ChevronRight className="h-3.5 w-3.5" /><span className="font-medium text-slate-700">{pathname.endsWith('/new') ? 'New' : pathname.endsWith('/edit') ? 'Edit' : 'Details'}</span></>}
-      {section?.to === '/dashboard' && <><ChevronRight className="h-3.5 w-3.5" /><span className="font-medium text-slate-700">Dashboard</span></>}
     </nav>
   );
 }
@@ -189,7 +188,6 @@ export default function Layout() {
             <Wordmark to="/dashboard" compact />
           </div>
           <div className="flex items-center gap-3">
-            <p className="hidden text-sm text-slate-600 xl:block">Welcome, <span className="font-semibold text-indigo-900">{firstName(user.name)}</span></p>
             <NotificationBell />
             <Link to="/profile" className="flex items-center gap-2.5 rounded-lg px-2 py-1 hover:bg-slate-50">
               <Avatar name={user.name} className="h-9 w-9 text-xs" />
@@ -213,9 +211,11 @@ export default function Layout() {
           </div>
         )}
         <main id="main-content" ref={mainRef} className="flex min-w-0 flex-1 flex-col overflow-y-auto">
-          <div className="border-b border-slate-200 bg-white px-4 py-2.5 lg:px-8">
-            <div className="mx-auto max-w-7xl"><Breadcrumb items={items} pathname={pathname} /></div>
-          </div>
+          {pathname !== '/dashboard' && (
+            <div className="border-b border-slate-200 bg-white px-4 py-2.5 lg:px-8">
+              <div className="mx-auto max-w-7xl"><Breadcrumb items={items} pathname={pathname} /></div>
+            </div>
+          )}
           <div className="flex-1 px-4 py-6 lg:px-8">
             <div className="mx-auto max-w-7xl"><Suspense fallback={<Loading />}><Outlet /></Suspense></div>
           </div>

@@ -49,7 +49,7 @@ export default function MentorDashboard({ data, reload, user }) {
                     </div>
                     {a.status === 'assigned'
                       ? <Button size="sm" icon={Check} onClick={() => accept(a.id)}>Accept</Button>
-                      : <Link to={`/startups/${a.startupId}`}><ChevronRight className="h-4 w-4 text-slate-400" /></Link>}
+                      : <Link to={`/startups/${a.startupId}`} aria-label="Open startup" className="rounded p-1 hover:bg-slate-100"><ChevronRight className="h-4 w-4 text-slate-400" /></Link>}
                   </li>
                 ))}
               </ul>

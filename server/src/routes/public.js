@@ -5,7 +5,7 @@
 import { Router } from 'express';
 import { Op } from 'sequelize';
 import { Startup, Workshop, Mentor, Investor, User, Role, FundingRequest, InvestmentInterest } from '../models/index.js';
-import { today, humanDate } from '../utils/http.js';
+import { today } from '../utils/http.js';
 
 const router = Router();
 
@@ -29,9 +29,9 @@ async function overview() {
   ]);
   const industries = await Startup.findAll({ where: { status: { [Op.in]: ['approved', 'incubated'] } }, attributes: ['industry'] });
 
+  // Upcoming events are listed separately, so the notice board carries announcements only.
   const notices = [
-    ...upcoming.map((w) => ({ text: `Registrations open: ${w.title} (${w.type}) on ${humanDate(w.date)}${w.venue ? `, ${w.venue}` : ''}`, date: w.date, isNew: true })),
-    ...recentlyIncubated.map((s) => ({ text: `${s.startupName} (${s.industry}) has been admitted to the incubation programme`, date: s.updatedAt.toISOString().slice(0, 10), isNew: false })),
+    ...recentlyIncubated.map((s) => ({ text: `${s.startupName} (${s.industry}) has been admitted to the incubation programme`, date: s.updatedAt.toISOString().slice(0, 10), isNew: true })),
     { text: 'Applications for the pre-incubation programme are open throughout the year — submit your idea on the portal.', date: null, isNew: false },
   ];
 

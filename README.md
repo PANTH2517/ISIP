@@ -44,7 +44,7 @@ The login page has one-click buttons that fill these in during development.
 ## Portal design
 
 The frontend follows a civic **e-governance portal** style: accessibility bar (skip link, A- / A / A+ text size,
-dark high-contrast mode, all remembered per browser), navy/saffron/green theme, notice ticker, breadcrumbs and an
+remembered per browser), navy/saffron/green theme, breadcrumbs and an
 institutional footer. The design is deliberately generic: it uses no official emblems or government names.
 
 - **Public home page** (`/`): live statistics, programmes, the six-step incubation journey, upcoming events and a
@@ -104,7 +104,7 @@ Draft → Pending → Approved ──(secures finance)──► Incubated
 | Data encryption | Phone numbers encrypted at rest with AES-256-GCM (`utils/crypto.js`) |
 | Audit logging | Every state-changing request is logged; viewable at **Admin → Audit Log** |
 | Backup support | `npm run backup` exports all tables to JSON |
-| Responsive & accessible UI | Tailwind responsive layout with a collapsible mobile sidebar; text-size and high-contrast controls, skip link, breadcrumbs |
+| Responsive & accessible UI | Tailwind responsive layout with a collapsible mobile sidebar; text-size controls, skip link, breadcrumbs |
 | Scalable architecture | Stateless REST API, separate frontend and backend; PostgreSQL in production |
 
 ---

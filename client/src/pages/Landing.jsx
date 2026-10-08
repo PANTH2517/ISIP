@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
-  Rocket, Sprout, IndianRupee, UserCheck, Briefcase, GraduationCap, ArrowRight, CalendarDays, MapPin, ShieldCheck,
-  FileCheck2, Target, Landmark, UserPlus, ClipboardList, ChevronDown, Users, BadgeCheck, Building2, Clock,
+  Rocket, Sprout, IndianRupee, UserCheck, Briefcase, GraduationCap, ArrowRight, CalendarDays, MapPin,
+  Landmark, ClipboardList, ChevronDown, Users, BadgeCheck, Building2, Clock,
 } from 'lucide-react';
 import PublicLayout from '../components/portal/PublicLayout';
 import { useApi } from '../hooks/useApi';
@@ -20,18 +20,18 @@ const PROGRAMMES = [
 ];
 
 const STEPS = [
-  { icon: UserPlus, title: 'Register', text: 'Create your account and verify your email.' },
-  { icon: FileCheck2, title: 'Submit your idea', text: 'Problem, solution, business model and team.' },
-  { icon: ShieldCheck, title: 'Verification', text: 'The Incubation Cell reviews and approves.' },
-  { icon: Target, title: 'Mentoring & milestones', text: 'A mentor guides you from idea to revenue.' },
-  { icon: Landmark, title: 'Secure finance', text: 'Seed funding or an accepted investor offer.' },
-  { icon: Sprout, title: 'Incubated', text: 'Admitted to the incubation programme.' },
+  { title: 'Register', text: 'Create your account and verify your email.' },
+  { title: 'Submit your idea', text: 'Problem, solution, business model and team.' },
+  { title: 'Verification', text: 'The Incubation Cell reviews and approves.' },
+  { title: 'Mentoring & milestones', text: 'A mentor guides you from idea to revenue.' },
+  { title: 'Secure finance', text: 'Seed funding or an accepted investor offer.' },
+  { title: 'Incubated', text: 'Admitted to the incubation programme.' },
 ];
 
 const STAKEHOLDERS = [
   { icon: Rocket, title: 'Student entrepreneurs', points: ['Register & submit startup ideas', 'Track milestones and funding', 'Pitch to investors'], cta: 'Register your startup' },
-  { icon: UserCheck, title: 'Mentors', points: ['Guide assigned startups', 'Approve milestones & give feedback', 'Schedule mentoring sessions'], cta: 'Join as a mentor' },
-  { icon: Briefcase, title: 'Investors', points: ['Browse verified startups', 'Make offers & review pitch decks', 'Hold diligence meetings'], cta: 'Join as an investor' },
+  { icon: UserCheck, title: 'Mentors', points: ['Guide assigned startups', 'Approve milestones & give feedback', 'Schedule mentoring sessions'], cta: 'Join as a mentor', to: '/register?role=mentor' },
+  { icon: Briefcase, title: 'Investors', points: ['Browse verified startups', 'Make offers & review pitch decks', 'Hold diligence meetings'], cta: 'Join as an investor', to: '/register?role=investor' },
   { icon: Building2, title: 'Incubation Cell', points: ['Verify startups & assign mentors', 'Approve funding requests', 'Reports & analytics'], cta: 'Administrator login', to: '/login' },
 ];
 
@@ -57,7 +57,13 @@ function SectionTitle({ eyebrow, title, text, light = false }) {
 export default function Landing() {
   const { data } = useApi('/public/overview');
   const { user } = useAuth();
+  const { hash } = useLocation();
   useEffect(() => { document.title = `${BRAND.name} · ${BRAND.fullName}`; }, []);
+  // Menu links point at /#section; scroll there (also once data has rendered and moved the layout).
+  useEffect(() => {
+    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView();
+    else window.scrollTo(0, 0);
+  }, [hash, data]);
   const s = data?.stats;
 
   const STATS = [
@@ -70,7 +76,7 @@ export default function Landing() {
   ];
 
   return (
-    <PublicLayout notices={data?.notices}>
+    <PublicLayout>
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-700">
         <div className="hero-pattern absolute inset-0" />
@@ -97,7 +103,7 @@ export default function Landing() {
             </div>
           </div>
           {/* Journey card */}
-          <div className="relative hidden lg:block">
+          <div id="how-it-works" className="relative scroll-mt-4">
             <div className="rounded-2xl border border-white/15 bg-white/10 p-6 shadow-2xl backdrop-blur">
               <p className="text-sm font-semibold uppercase tracking-wider text-saffron-200">Your startup journey</p>
               <ol className="mt-5 space-y-4">
@@ -135,30 +141,13 @@ export default function Landing() {
           <SectionTitle eyebrow="Programmes & services" title="Everything a student startup needs" text="One portal for every stage of the incubation lifecycle, from the first idea to investment." />
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {PROGRAMMES.map(({ icon: Icon, title, text }) => (
-              <div key={title} className="group rounded-xl border border-slate-200 border-t-4 border-t-indigo-800 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-50 text-indigo-800 transition group-hover:bg-saffron-500 group-hover:text-white"><Icon className="h-6 w-6" /></div>
+              <div key={title} className="rounded-xl border border-slate-200 border-t-4 border-t-indigo-800 bg-white p-6 shadow-sm">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-50 text-indigo-800"><Icon className="h-6 w-6" /></div>
                 <h3 className="mt-4 text-lg font-semibold text-indigo-950">{title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">{text}</p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section id="how-it-works" className="scroll-mt-4 bg-indigo-950 px-4 py-20 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <SectionTitle light eyebrow="How it works" title="Six steps to incubation" text="A transparent, trackable process. You always know where your application stands." />
-          <ol className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-6">
-            {STEPS.map(({ icon: Icon, title, text }, i) => (
-              <li key={title} className="relative rounded-xl bg-white/5 p-5 text-center ring-1 ring-white/10">
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-saffron-500 px-2.5 py-0.5 text-xs font-bold text-white">Step {i + 1}</span>
-                <Icon className="mx-auto mt-3 h-8 w-8 text-saffron-300" />
-                <p className="mt-3 font-semibold text-white">{title}</p>
-                <p className="mt-1 text-sm text-indigo-200">{text}</p>
-              </li>
-            ))}
-          </ol>
         </div>
       </section>
 
@@ -190,7 +179,11 @@ export default function Landing() {
                   ))}
                 </ul>
               )}
-              <div className="border-t border-slate-100 bg-slate-50 px-5 py-3 text-sm"><Link to="/login" className="font-semibold text-indigo-800 hover:underline">Log in to register for events →</Link></div>
+              {(!user || user.role === 'student' || user.role === 'admin') && (
+                <div className="border-t border-slate-100 bg-slate-50 px-5 py-3 text-sm">
+                  <Link to={user ? '/workshops' : '/login'} className="font-semibold text-indigo-800 hover:underline">{user ? 'View all events →' : 'Log in to register for events →'}</Link>
+                </div>
+              )}
             </div>
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
               <div className="flex items-center gap-2 bg-saffron-500 px-5 py-3 text-white"><ClipboardList className="h-5 w-5" /><h3 className="font-semibold">Notice board</h3></div>

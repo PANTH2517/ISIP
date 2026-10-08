@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { MailCheck, Rocket, UserCheck, Briefcase } from 'lucide-react';
 import api, { errMsg } from '../../api/client';
 import { Button, Field } from '../../components/ui';
 import AuthShell, { DevLink } from './AuthShell';
 import { INVESTOR_TYPES } from '../../utils/format';
 
+const ROLES = ['student', 'mentor', 'investor'];
+
 export default function Register() {
-  const [form, setForm] = useState({ role: 'student', name: '', email: '', phone: '', password: '', confirm: '', expertise: '', bio: '', firmName: '', investorType: 'Angel', focusIndustries: '' });
+  const [params] = useSearchParams();
+  const [form, setForm] = useState({ role: ROLES.includes(params.get('role')) ? params.get('role') : 'student', name: '', email: '', phone: '', password: '', confirm: '', expertise: '', bio: '', firmName: '', investorType: 'Angel', focusIndustries: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(null);

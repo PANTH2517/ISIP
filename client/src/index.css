@@ -54,20 +54,6 @@
   body { @apply bg-[#f3f5f9] text-slate-800 antialiased; }
   h1, h2, h3, .font-display { font-family: var(--font-display); }
   :focus-visible { outline: 3px solid var(--color-saffron-400); outline-offset: 2px; }
-
-  /* High-contrast mode (accessibility bar): darker greys, stronger borders, underlined links. */
-  html.hc {
-    --color-slate-300: #6b7280;
-    --color-slate-400: #4b5563;
-    --color-slate-500: #1f2937;
-    --color-slate-600: #111827;
-    --color-slate-200: #9ca3af;
-    --color-slate-100: #d1d5db;
-  }
-  html.hc a { text-decoration: underline; }
-  /* Dark high-contrast view: invert the page, then flip media back so photos keep their colours. */
-  html.hc { background: #fff; filter: invert(1) hue-rotate(180deg) contrast(1.1); }
-  html.hc img, html.hc video, html.hc canvas { filter: invert(1) hue-rotate(180deg); }
 }
 
 /* In the components layer so utility classes (pl-9, w-auto, py-1 …) can override them. */
@@ -84,7 +70,7 @@
   .table tbody tr:hover td { @apply bg-slate-50/70; }
 
   /* Saffron / white / green strip used at the very top of the portal. */
-  .tricolor { background: linear-gradient(90deg, #ff9933 0 33.33%, #ffffff 33.33% 66.66%, #138808 66.66% 100%); }
+  .tricolor { background: linear-gradient(90deg, #ff9933 0 33.33%, #e2e6ee 33.33% 66.66%, #138808 66.66% 100%); }
 
   /* Subtle dotted texture for hero banners. */
   .hero-pattern {
@@ -92,13 +78,5 @@
     background-size: 18px 18px;
   }
 
-  /* Notice ticker */
-  .ticker-track { display: inline-flex; gap: 3rem; animation: ticker 40s linear infinite; white-space: nowrap; }
-  .ticker:hover .ticker-track { animation-play-state: paused; }
-  @media (prefers-reduced-motion: reduce) { .ticker-track { animation: none; } }
 }
 
-@keyframes ticker {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}

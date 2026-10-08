@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { LogIn, UserPlus, LayoutDashboard, Menu, X, Megaphone } from 'lucide-react';
+import { LogIn, UserPlus, LayoutDashboard, Menu, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import TopBar from './TopBar';
 import Footer from './Footer';
@@ -15,31 +15,8 @@ const LINKS = [
   { href: '/#faq', label: 'FAQs' },
 ];
 
-/** Scrolling "latest updates" strip. Items are duplicated so the marquee loops seamlessly. */
-export function NoticeTicker({ notices = [] }) {
-  if (!notices.length) return null;
-  const items = notices.map((n, i) => (
-    <span key={i} className="inline-flex items-center gap-2">
-      {n.isNew && <span className="rounded bg-saffron-500 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">New</span>}
-      {n.text}
-    </span>
-  ));
-  return (
-    <div className="border-b border-saffron-200 bg-saffron-50">
-      <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 lg:px-8">
-        <span className="flex shrink-0 items-center gap-1.5 bg-saffron-500 px-3 py-2 text-xs font-bold uppercase tracking-wide text-white">
-          <Megaphone className="h-3.5 w-3.5" />Latest updates
-        </span>
-        <div className="ticker relative flex-1 overflow-hidden py-2 text-sm text-slate-800" aria-live="off">
-          <div className="ticker-track">{items}{items}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/** Public site chrome: accessibility bar, masthead, navigation bar and institutional footer. */
-export default function PublicLayout({ children, notices }) {
+/** Public site chrome: utility bar, masthead, navigation bar and institutional footer. */
+export default function PublicLayout({ children }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   return (
@@ -74,7 +51,7 @@ export default function PublicLayout({ children, notices }) {
                 {l.label}
               </NavLink>
             ) : (
-              <a key={l.href} href={l.href} onClick={() => setOpen(false)} className="border-b-2 border-transparent px-4 py-3 text-sm font-medium text-indigo-100 transition hover:bg-white/10 hover:text-white">{l.label}</a>
+              <Link key={l.href} to={l.href} onClick={() => setOpen(false)} className="border-b-2 border-transparent px-4 py-3 text-sm font-medium text-indigo-100 transition hover:bg-white/10 hover:text-white">{l.label}</Link>
             )))}
             <div className="flex gap-2 py-3 md:hidden">
               {user ? <Link to="/dashboard" className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-indigo-900">Go to my dashboard</Link> : <>
@@ -85,7 +62,6 @@ export default function PublicLayout({ children, notices }) {
           </div>
         </nav>
       </header>
-      <NoticeTicker notices={notices} />
       <main id="main-content" className="flex-1">{children}</main>
       <Footer />
     </div>
