@@ -10,7 +10,13 @@ const ROLES = ['student', 'mentor', 'investor'];
 
 export default function Register() {
   const [params] = useSearchParams();
-  const [form, setForm] = useState({ role: ROLES.includes(params.get('role')) ? params.get('role') : 'student', name: '', email: '', phone: '', password: '', confirm: '', expertise: '', bio: '', firmName: '', investorType: 'Angel', focusIndustries: '' });
+  const roleParam = ROLES.includes(params.get('role')) ? params.get('role') : 'student';
+  const [form, setForm] = useState({ role: roleParam, name: '', email: '', phone: '', password: '', confirm: '', expertise: '', bio: '', firmName: '', investorType: 'Angel', focusIndustries: '' });
+  const [lastRoleParam, setLastRoleParam] = useState(roleParam);
+  if (roleParam !== lastRoleParam) {
+    setLastRoleParam(roleParam);
+    setForm((f) => ({ ...f, role: roleParam }));
+  }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(null);

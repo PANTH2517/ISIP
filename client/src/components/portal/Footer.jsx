@@ -2,11 +2,13 @@ import { Link } from 'react-router-dom';
 import { Mail, Clock, MapPin } from 'lucide-react';
 import { Emblem } from './Brand';
 import { BRAND } from '../../config/brand';
+import { useAuth } from '../../context/AuthContext';
 
 const YEAR = new Date().getFullYear();
 
 /** Institutional footer shared by the public site and the signed-in portal. */
 export default function Footer({ compact = false }) {
+  const { user } = useAuth();
   return (
     <footer className="mt-auto bg-indigo-950 text-indigo-100">
       {!compact && (
@@ -27,19 +29,25 @@ export default function Footer({ compact = false }) {
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white">Quick links</h3>
             <ul className="space-y-2 text-sm">
               <li><Link to="/" className="hover:text-white hover:underline">Home</Link></li>
-              <li><a href="/#programmes" className="hover:text-white hover:underline">Programmes</a></li>
-              <li><a href="/#how-it-works" className="hover:text-white hover:underline">How it works</a></li>
-              <li><a href="/#startups" className="hover:text-white hover:underline">Incubated startups</a></li>
-              <li><a href="/#faq" className="hover:text-white hover:underline">FAQs</a></li>
+              <li><Link to="/#programmes" className="hover:text-white hover:underline">Programmes</Link></li>
+              <li><Link to="/#how-it-works" className="hover:text-white hover:underline">How it works</Link></li>
+              <li><Link to="/#startups" className="hover:text-white hover:underline">Incubated startups</Link></li>
+              <li><Link to="/#faq" className="hover:text-white hover:underline">FAQs</Link></li>
             </ul>
           </div>
           <div>
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white">For stakeholders</h3>
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white">{user ? 'My account' : 'For stakeholders'}</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/register" className="hover:text-white hover:underline">Register a startup</Link></li>
-              <li><Link to="/register" className="hover:text-white hover:underline">Join as a mentor</Link></li>
-              <li><Link to="/register" className="hover:text-white hover:underline">Join as an investor</Link></li>
-              <li><Link to="/login" className="hover:text-white hover:underline">Portal login</Link></li>
+              {user ? <>
+                <li><Link to="/dashboard" className="hover:text-white hover:underline">My dashboard</Link></li>
+                <li><Link to="/notifications" className="hover:text-white hover:underline">Notifications</Link></li>
+                <li><Link to="/profile" className="hover:text-white hover:underline">My profile</Link></li>
+              </> : <>
+                <li><Link to="/register" className="hover:text-white hover:underline">Register a startup</Link></li>
+                <li><Link to="/register?role=mentor" className="hover:text-white hover:underline">Join as a mentor</Link></li>
+                <li><Link to="/register?role=investor" className="hover:text-white hover:underline">Join as an investor</Link></li>
+                <li><Link to="/login" className="hover:text-white hover:underline">Portal login</Link></li>
+              </>}
             </ul>
           </div>
           <div>

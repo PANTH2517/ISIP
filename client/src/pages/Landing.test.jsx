@@ -28,4 +28,20 @@ describe('public home page', () => {
     expect(screen.getAllByRole('link', { name: /register your startup/i })[0]).toHaveAttribute('href', '/register');
     expect(screen.queryByRole('link', { name: /go to my dashboard/i })).not.toBeInTheDocument();
   });
+
+  it('offers a dashboard button only on the signed-in user’s own role card', async () => {
+    localStorage.setItem('isip_token', 'jwt');
+    api.get.mockImplementation((url) => {
+      if (url === '/auth/me') return Promise.resolve({ data: { id: 5, name: 'Aarav Patel', role: 'student' } });
+      if (url === '/public/overview') return Promise.resolve({ data: overview });
+      return new Promise(() => {});
+    });
+    render(<MemoryRouter><AuthProvider><Landing /></AuthProvider></MemoryRouter>);
+
+    expect(await screen.findByRole('link', { name: /open my dashboard/i })).toHaveAttribute('href', '/dashboard');
+    expect(screen.getAllByRole('link', { name: /open my dashboard/i })).toHaveLength(1);
+    expect(screen.getByText('Your role')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /join as a mentor|join as an investor|administrator login/i })).not.toBeInTheDocument();
+    localStorage.clear();
+  });
 });

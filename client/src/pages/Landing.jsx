@@ -29,10 +29,10 @@ const STEPS = [
 ];
 
 const STAKEHOLDERS = [
-  { icon: Rocket, title: 'Student entrepreneurs', points: ['Register & submit startup ideas', 'Track milestones and funding', 'Pitch to investors'], cta: 'Register your startup' },
-  { icon: UserCheck, title: 'Mentors', points: ['Guide assigned startups', 'Approve milestones & give feedback', 'Schedule mentoring sessions'], cta: 'Join as a mentor', to: '/register?role=mentor' },
-  { icon: Briefcase, title: 'Investors', points: ['Browse verified startups', 'Make offers & review pitch decks', 'Hold diligence meetings'], cta: 'Join as an investor', to: '/register?role=investor' },
-  { icon: Building2, title: 'Incubation Cell', points: ['Verify startups & assign mentors', 'Approve funding requests', 'Reports & analytics'], cta: 'Administrator login', to: '/login' },
+  { role: 'student', icon: Rocket, title: 'Student entrepreneurs', points: ['Register & submit startup ideas', 'Track milestones and funding', 'Pitch to investors'], cta: 'Register your startup' },
+  { role: 'mentor', icon: UserCheck, title: 'Mentors', points: ['Guide assigned startups', 'Approve milestones & give feedback', 'Schedule mentoring sessions'], cta: 'Join as a mentor', to: '/register?role=mentor' },
+  { role: 'investor', icon: Briefcase, title: 'Investors', points: ['Browse verified startups', 'Make offers & review pitch decks', 'Hold diligence meetings'], cta: 'Join as an investor', to: '/register?role=investor' },
+  { role: 'admin', icon: Building2, title: 'Incubation Cell', points: ['Verify startups & assign mentors', 'Approve funding requests', 'Reports & analytics'], cta: 'Administrator login', to: '/login' },
 ];
 
 const FAQS = [
@@ -232,8 +232,11 @@ export default function Landing() {
         <div className="mx-auto max-w-7xl">
           <SectionTitle eyebrow="Get started" title="One portal for every stakeholder" />
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {STAKEHOLDERS.map(({ icon: Icon, title, points, cta, to }) => (
-              <div key={title} className="flex flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            {STAKEHOLDERS.map(({ role, icon: Icon, title, points, cta, to }) => {
+              const mine = user?.role === role;
+              return (
+              <div key={title} className={`relative flex flex-col rounded-xl border bg-white p-6 shadow-sm ${mine ? 'border-saffron-400 ring-2 ring-saffron-200' : 'border-slate-200'}`}>
+                {mine && <span className="absolute -top-3 right-4 whitespace-nowrap rounded-full bg-saffron-500 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white shadow-sm">Your role</span>}
                 <div className="flex items-center gap-3">
                   <div className="rounded-lg bg-saffron-50 p-2.5 text-saffron-600"><Icon className="h-6 w-6" /></div>
                   <h3 className="font-semibold text-indigo-950">{title}</h3>
@@ -241,11 +244,15 @@ export default function Landing() {
                 <ul className="mt-4 flex-1 space-y-2 text-sm text-slate-600">
                   {points.map((p) => <li key={p} className="flex gap-2"><BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#138808]" />{p}</li>)}
                 </ul>
-                <Link to={user ? '/dashboard' : to || '/register'} className="mt-5 inline-flex items-center justify-center gap-2 rounded-md border-2 border-indigo-800 px-4 py-2 text-sm font-semibold text-indigo-900 hover:bg-indigo-800 hover:text-white">
-                  {user ? 'Open dashboard' : cta}<ArrowRight className="h-4 w-4" />
-                </Link>
+                {/* Signed in: only your own role gets a button. Signed out: each card leads to its sign-up / login. */}
+                {(!user || mine) && (
+                  <Link to={mine ? '/dashboard' : to || '/register'} className={`mt-5 inline-flex items-center justify-center gap-2 rounded-md border-2 px-4 py-2 text-sm font-semibold ${mine ? 'border-saffron-500 bg-saffron-500 text-white hover:bg-saffron-600' : 'border-indigo-800 text-indigo-900 hover:bg-indigo-800 hover:text-white'}`}>
+                    {mine ? 'Open my dashboard' : cta}<ArrowRight className="h-4 w-4" />
+                  </Link>
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
