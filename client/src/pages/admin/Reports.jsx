@@ -42,20 +42,20 @@ export default function Reports() {
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard icon={Rocket} label="Number of startups" value={s.totals.startups} sub={`${s.totals.activeIncubations} incubated`} />
-        <StatCard icon={IndianRupee} label="Funding requested" value={inrShort(s.funding.requestedTotal)} sub={`${s.funding.requests} requests`} color="amber" />
-        <StatCard icon={Sprout} label="Funding approved" value={inrShort(s.funding.approvedTotal)} sub={`${s.funding.byStatus.approved || 0} approved requests`} color="green" />
+        <StatCard icon={IndianRupee} label="Awaiting clearance" value={inrShort(s.transactions.awaitingAmount)} sub={`${s.transactions.awaiting} transactions · ${s.transactions.byClearance.cancelled || 0} cancelled`} color="amber" />
+        <StatCard icon={Sprout} label="Finance cleared" value={inrShort(s.transactions.clearedAmount)} sub={`${s.transactions.cleared} cleared transactions`} color="green" />
         <StatCard icon={UserCheck} label="Active mentors" value={s.totals.activeMentors} sub={`of ${s.totals.mentors} mentors`} color="sky" />
-        <StatCard icon={Briefcase} label="Investor commitments" value={inrShort(s.investments.committed)} sub={`${s.investments.deals} deals · ${s.investments.offers} offers`} color="violet" />
+        <StatCard icon={Briefcase} label="Investor offers" value={s.investments.offers} sub={`${s.investments.pending} awaiting founders · ${s.transactions.total} accepted`} color="violet" />
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Industry-wise startups"><div className="h-64"><IndustryBar industry={s.industry} /></div></Card>
         <Card title="Startups by status"><div className="h-64"><StatusDoughnut byStatus={s.startupsByStatus} /></div></Card>
         <Card title="Monthly registrations"><div className="h-64"><MonthlyLine monthly={s.monthly} /></div></Card>
-        <Card title="Funding requested per month">
+        <Card title="Finance cleared per month">
           <div className="h-64">
             <Bar
-              data={{ labels: s.monthly.map((m) => monthLabel(m.month)), datasets: [{ label: 'Requested (₹)', data: s.monthly.map((m) => m.fundingRequested), backgroundColor: '#f59e0b', borderRadius: 6, maxBarThickness: 40 }] }}
+              data={{ labels: s.monthly.map((m) => monthLabel(m.month)), datasets: [{ label: 'Cleared (₹)', data: s.monthly.map((m) => m.financeCleared), backgroundColor: '#138808', borderRadius: 6, maxBarThickness: 40 }] }}
               options={{ maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => `₹${Number(v).toLocaleString('en-IN')}` } } } }}
             />
           </div>

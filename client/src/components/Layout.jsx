@@ -36,7 +36,7 @@ const NAV = {
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/startups', label: 'Startups', icon: Rocket },
     { to: '/admin/mentors', label: 'Mentors', icon: UserCheck },
-    { to: '/funding', label: 'Funding Requests', icon: IndianRupee },
+    { to: '/funding', label: 'Transactions', icon: IndianRupee },
     { to: '/workshops', label: 'Workshops & Events', icon: GraduationCap },
     { to: '/admin/investors', label: 'Investors', icon: Briefcase },
     { to: '/admin/users', label: 'Users', icon: Users },

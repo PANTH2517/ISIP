@@ -1,6 +1,6 @@
 # StartIn — Intelligent Startup Incubation Platform (ISIP)
 
-A web platform that digitises a college incubation cell (E-Cell / Incubation Center). Startup applications, mentor assignment, milestone tracking, funding requests, meetings, workshops, documents, notifications and reports all live in one place, replacing Google Forms, emails and spreadsheets.
+A web platform that digitises a college incubation cell (E-Cell / Incubation Center). Startup applications, mentor assignment, milestone tracking, investor funding (cleared by the incubation cell), meetings, workshops, documents, notifications and reports all live in one place, replacing Google Forms, emails and spreadsheets.
 
 **Stack:** React + Tailwind CSS + Chart.js · Node.js + Express · PostgreSQL (or SQLite locally) via Sequelize · JWT auth
 
@@ -62,12 +62,12 @@ institutional footer. The design is deliberately generic: it uses no official em
 | 2 | **Startup Registration** | Create / edit / delete startups with name, industry, description, team members, tech stack, problem, solution and business model. Lifecycle: Draft → **Pending → Approved → Incubated** (or Rejected with remarks and resubmit). A startup becomes **Incubated only once it secures finance** (see below) |
 | 3 | **Mentor Management** | Admin assigns/removes mentors; mentors accept assignments; mentor dashboard shows assigned startups, meetings, pending reviews and completed milestones |
 | 4 | **Milestone Tracking** | Approval auto-creates Idea Validation → Prototype → MVP → Customer Testing → Revenue → Funding. Students submit updates, mentors approve or return them, and the **progress bar recalculates automatically**. Mentors can add custom milestones |
-| 5 | **Funding Requests** | Purpose, amount, business plan and supporting document. Admin can **approve** (full or partial), **reject** or **request modification**; students resubmit. Full funding history |
+| 5 | **Funding Transactions** | Funding happens **only between founders and investors**. When a founder accepts an investor offer it becomes a transaction, and the Incubation Cell can only **clear** it, put it **on hold** (with a reason) or **cancel** it (with a reason). Founders and investors see the status and the reason; only cleared deals count as finance. Admin **Transactions** page with filters |
 | 6 | **Meeting Scheduler** | Students request meetings with assigned mentors; mentors **accept / reject / reschedule** or **schedule meetings directly**. Every meeting can carry a venue or video link; meetings can be completed or cancelled; history stored. **Automatic lifecycle:** both sides check in from 15 min before the start. An unconfirmed request **expires**, and a confirmed meeting nobody checks in to is marked **missed** (auto-cancelled), 10 min after the start. Checked-in meetings auto-complete after an hour. Both people are notified. The same rules apply to investor meetings |
 | 7 | **Document Repository** | Upload PDF, PPT, pitch decks, business plans, prototype images; re-uploading under the same title creates a new **version** with full version history |
 | 8 | **Workshop Management** | Admin creates workshops, hackathons and training sessions (with capacity); students register; admin marks attendance; **PDF certificates** are generated for attendees |
-| 9 | **Notifications** | Dashboard bell + notifications page + email for milestone approvals, meetings, funding decisions, workshops and assignments; admin announcements |
-| 10 | **Reports** | Startup count, funding requested vs approved, active mentors, industry-wise startups, monthly registrations, workshop stats. Charts, saved reports, **PDF export** (paginated, branded tables) and **CSV export** |
+| 9 | **Notifications** | Dashboard bell + notifications page + email for milestone approvals, meetings, offers and transaction clearances, workshops and assignments; admin announcements |
+| 10 | **Reports** | Startup count, finance cleared vs awaiting clearance, active mentors, industry-wise startups, monthly registrations, workshop stats. Charts, saved reports, **PDF export** (paginated, branded tables) and **CSV export** |
 | 11 | **Investor Module** | Investors register (Angel / VC / Corporate…), browse approved & incubated startups, view a read-only profile (overview, team, milestones, pitch documents), **make investment offers** (amount, equity %, instrument) and **request meetings** (intro, due diligence, follow-up). Founders browse an **Investors directory** and send **pitch requests** with their funding ask and pitch deck. Whoever receives a request or a new proposed time confirms it. Founders accept/decline offers and accept/decline/reschedule meetings. Investor dashboard with focus-industry recommendations; admin Investors page with all offers and deals |
 
 **Dashboards:** separate Student, Mentor, Investor and Admin dashboards.
@@ -88,12 +88,21 @@ institutional footer. The design is deliberately generic: it uses no official em
 Draft → Pending → Approved ──(secures finance)──► Incubated
 ```
 
-*Finance* means an **approved incubation funding request** or an **accepted investor offer**.
+*Finance* means an **investor deal that the founder accepted and the Incubation Cell cleared**. The Incubation Cell never grants money itself.
 
-- When the admin approves a funding request, or a founder accepts an investor offer, an approved startup moves to **Incubated automatically**. The founder, mentors and admins are notified.
+```
+Investor offer ──(founder accepts)──► Under review ──(admin clears)──► Cleared = finance
+                                          │  ▲
+                              (admin holds)  │ (admin clears)
+                                          ▼  │
+                                        On hold ──(admin cancels)──► Cancelled
+```
+
+- When the admin clears a transaction, an approved startup moves to **Incubated automatically**. The founder, investor, mentors and admins are notified.
+- Holding or cancelling needs a reason, which both the founder and the investor see. Cleared and cancelled transactions are final.
 - The admin's manual "Mark as incubated" button stays disabled, and the API refuses the change, until the startup has finance.
 - Approved startups show an "Awaiting finance" banner; the admin dashboard lists every startup still waiting.
-- Each startup shows a **Finance secured** card (incubation funding + investor commitments).
+- Each startup shows a **Finance secured** card (cleared deals, plus the amount still awaiting clearance).
 
 ### Non-functional requirements
 
@@ -116,7 +125,7 @@ ISIP/
 ├── server/                 Express API
 │   ├── src/
 │   │   ├── models/index.js     All tables + associations (mirrors the class diagram)
-│   │   ├── routes/             auth, startups, documents, milestones, mentors, funding, meetings,
+│   │   ├── routes/             auth, startups, documents, milestones, mentors, meetings,
 │   │   │                       feedback, workshops, notifications, users, reports, dashboard, investors, people
 │   │   ├── middleware/         auth (JWT + RBAC), audit logger, file upload
 │   │   ├── services/           access control + finance/incubation rule, notifications, mailer, statistics
@@ -127,14 +136,14 @@ ISIP/
     └── src/                Frontend tests live next to the code as *.test.js(x) (Vitest + Testing Library)
         ├── pages/              auth, dashboards, startups (+ tabs), meetings, funding,
         │                       workshops, notifications, profile, people profiles, investor/*, admin/*
-        └── components/         Layout, UI kit, FundingPanel, MeetingsPanel, InvestorMeetings, InvestorActions
+        └── components/         Layout, UI kit, TransactionsPanel, MeetingsPanel, InvestorMeetings, InvestorActions
 ```
 
-## Database (21 tables)
+## Database (20 tables)
 
-`Roles`, `Users`, `Startups`, `StartupMembers`, `Mentors`, `MentorAssignments`, `Milestones`, `MilestoneUpdates`, `FundingRequests`, `MeetingRequests`, `Meetings`, `Documents`, `Workshops`, `WorkshopRegistrations`, `Notifications`, `Feedback`, `Reports`, `AuditLogs`, `Investors`, `InvestmentInterests`, `InvestorMeetings`
+`Roles`, `Users`, `Startups`, `StartupMembers`, `Mentors`, `MentorAssignments`, `Milestones`, `MilestoneUpdates`, `MeetingRequests`, `Meetings`, `Documents`, `Workshops`, `WorkshopRegistrations`, `Notifications`, `Feedback`, `Reports`, `AuditLogs`, `Investors`, `InvestmentInterests`, `InvestorMeetings`
 
-These map one-to-one to the Experiment 5 class diagram, plus `Reports` and `AuditLogs` from the SRS and the three investor-module tables (the brief's *Investors* and *InvestorRequests*). Key relationships: User *creates* Startup (1:\*), Startup *has* Members / Milestones / Documents / FundingRequests (1:\*), Milestone *has* MilestoneUpdates (1:\*), Mentor ↔ Startup through MentorAssignment, MeetingRequest *results in* Meeting (1:0..1), Workshop *has* WorkshopRegistrations, Mentor *provides* Feedback.
+These map one-to-one to the Experiment 5 class diagram, plus `Reports` and `AuditLogs` from the SRS and the three investor-module tables (the brief's *Investors* and *InvestorRequests*). Key relationships: User *creates* Startup (1:\*), Startup *has* Members / Milestones / Documents (1:\*), Milestone *has* MilestoneUpdates (1:\*), Mentor ↔ Startup through MentorAssignment, MeetingRequest *results in* Meeting (1:0..1), Workshop *has* WorkshopRegistrations, Mentor *provides* Feedback.
 
 ## Use cases → where to find them
 
@@ -147,7 +156,7 @@ These map one-to-one to the Experiment 5 class diagram, plus `Reports` and `Audi
 | Manage Meetings | Student, Mentor, Admin | Meetings |
 | Track Milestones | Student, Mentor, Admin | Startup → Milestones tab |
 | Provide Feedback / Suggestions | Mentor | Startup → Mentor feedback tab |
-| Manage Funding | Student, Admin | Funding |
+| Manage Funding | Student, Investor, Admin | Investors tab (accept offers) · Transactions (clear / hold / cancel) |
 | Manage Workshops & Events | Student, Admin | Workshops & Events |
 | Manage Users | Admin | Users |
 | Assign Mentors · Verify Startup | Admin | Mentors; Startup → Approve / Reject / Assign mentor |

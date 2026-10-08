@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
-  ArrowLeft, Pencil, Send, Trash2, CheckCircle2, XCircle, Sprout, Info, Users, Target, FileText, IndianRupee, CalendarDays,
+  ArrowLeft, Pencil, Send, Trash2, CheckCircle2, XCircle, Sprout, Info, Users, Target, FileText, CalendarDays,
   MessageSquare, UserPlus, X, Briefcase, Handshake, CalendarPlus, Landmark,
 } from 'lucide-react';
 import api, { errMsg } from '../../api/client';
@@ -14,7 +14,6 @@ import TeamTab from './tabs/TeamTab';
 import MilestonesTab from './tabs/MilestonesTab';
 import DocumentsTab from './tabs/DocumentsTab';
 import FeedbackTab from './tabs/FeedbackTab';
-import FundingPanel from '../../components/FundingPanel';
 import MeetingsPanel from '../../components/MeetingsPanel';
 import InvestorsTab from './tabs/InvestorsTab';
 import { OfferModal, InvestorMeetingModal } from '../../components/InvestorActions';
@@ -139,12 +138,13 @@ export default function StartupDetail() {
     { id: 'team', label: 'Team', icon: Users, count: s.members.length },
     ...(active ? [{ id: 'milestones', label: 'Milestones', icon: Target }] : []),
     { id: 'documents', label: 'Documents', icon: FileText },
-    ...(active && (isOwner || isAdmin) ? [{ id: 'funding', label: 'Funding', icon: IndianRupee }] : []),
     ...(active && (isOwner || isAdmin) ? [{ id: 'investors', label: 'Investors', icon: Briefcase }] : []),
     ...(active && !isInvestor ? [{ id: 'meetings', label: 'Meetings', icon: CalendarDays }] : []),
     ...(active && !isInvestor ? [{ id: 'feedback', label: 'Mentor feedback', icon: MessageSquare }] : []),
   ];
-  const tab = tabs.some((t) => t.id === requestedTab) ? requestedTab : 'overview';
+  // Funding lives on the Investors tab now; old ?tab=funding links land there.
+  const wanted = requestedTab === 'funding' ? 'investors' : requestedTab;
+  const tab = tabs.some((t) => t.id === wanted) ? wanted : 'overview';
   const setTab = (t) => setParams(t === 'overview' ? {} : { tab: t }, { replace: true });
 
   return (
@@ -194,8 +194,8 @@ export default function StartupDetail() {
           <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             <Landmark className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
-              <b>Awaiting finance.</b> This startup moves into incubation once it secures finance: an approved funding request or an accepted investor offer.
-              {isOwner && <> Go to the <button className="font-semibold underline" onClick={() => setTab('funding')}>Funding</button> or <button className="font-semibold underline" onClick={() => setTab('investors')}>Investors</button> tab.</>}
+              <b>Awaiting finance.</b> This startup moves into incubation once an investor deal is accepted by the founder and cleared by the Incubation Cell.
+              {isOwner && <> See the <button className="font-semibold underline" onClick={() => setTab('investors')}>Investors</button> tab.</>}
             </span>
           </div>
         )}
@@ -243,9 +243,8 @@ export default function StartupDetail() {
               <Card title="Finance secured">
                 <p className="text-2xl font-bold text-slate-900">{inr(finance.total || 0)}</p>
                 <dl className="mt-3 space-y-1.5 text-sm">
-                  <div className="flex justify-between"><dt className="text-slate-500">Incubation funding</dt><dd className="font-medium">{inr(finance.fundingApproved || 0)}</dd></div>
-                  <div className="flex justify-between"><dt className="text-slate-500">Investor commitments</dt><dd className="font-medium">{inr(finance.investmentCommitted || 0)}</dd></div>
                   <div className="flex justify-between"><dt className="text-slate-500">Investors on board</dt><dd className="font-medium">{finance.investors || 0}</dd></div>
+                  <div className="flex justify-between"><dt className="text-slate-500">Awaiting clearance</dt><dd className="font-medium">{inr(finance.awaitingClearance || 0)}</dd></div>
                 </dl>
               </Card>
             )}
@@ -261,7 +260,6 @@ export default function StartupDetail() {
       {tab === 'team' && <TeamTab startup={s} canEdit={isOwner || isAdmin} reload={reload} />}
       {tab === 'milestones' && <MilestonesTab startup={s} role={user.role} isOwner={isOwner} onChange={reload} />}
       {tab === 'documents' && <DocumentsTab startup={s} canUpload={isOwner || isAdmin} />}
-      {tab === 'funding' && <FundingPanel startupId={s.id} startups={[s]} canCreate={isOwner} onChange={reload} />}
       {tab === 'meetings' && <MeetingsPanel startupId={s.id} />}
       {tab === 'feedback' && <FeedbackTab startup={s} role={user.role} onChange={reload} />}
       {tab === 'investors' && <InvestorsTab startup={s} canRespond={isOwner} onChange={reload} />}

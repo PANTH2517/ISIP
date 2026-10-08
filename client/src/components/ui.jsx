@@ -72,6 +72,16 @@ export function StatusBadge({ status }) {
   return <Badge color={color}>{label}</Badge>;
 }
 
+/** Incubation Cell review of an accepted investor deal. */
+const CLEARANCE = {
+  under_review: ['indigo', 'Under review'], on_hold: ['yellow', 'On hold'], cleared: ['green', 'Cleared'], cancelled: ['red', 'Cancelled'],
+};
+export function ClearanceBadge({ clearance }) {
+  if (!clearance) return null;
+  const [color, label] = CLEARANCE[clearance] || ['gray', clearance];
+  return <Badge color={color}>{label}</Badge>;
+}
+
 export function Modal({ open, onClose, title, children, footer, size = 'md' }) {
   useEffect(() => {
     if (!open) return undefined;

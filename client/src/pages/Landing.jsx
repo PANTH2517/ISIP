@@ -13,7 +13,7 @@ import { fmtDate, fmtTime, inrShort } from '../utils/format';
 const PROGRAMMES = [
   { icon: ClipboardList, title: 'Pre-incubation', text: 'Submit your idea, get it verified by the Incubation Cell and start building with structured milestones.' },
   { icon: Sprout, title: 'Incubation programme', text: 'Startups that secure finance are admitted to full incubation with workspace, mentoring and reviews.' },
-  { icon: IndianRupee, title: 'Seed funding', text: 'Apply for incubation funding with your business plan; track approvals and disbursal in one place.' },
+  { icon: IndianRupee, title: 'Cleared funding', text: 'Every investor deal you accept is checked and cleared by the Incubation Cell, so both sides are protected.' },
   { icon: UserCheck, title: 'Mentor network', text: 'Get matched with domain mentors who review milestones, give feedback and meet you regularly.' },
   { icon: Briefcase, title: 'Investor connect', text: 'Pitch to angel networks and VCs, receive offers and schedule diligence meetings from the portal.' },
   { icon: GraduationCap, title: 'Workshops & hackathons', text: 'Hands-on training, pitch clinics and hackathons with participation certificates.' },
@@ -24,7 +24,7 @@ const STEPS = [
   { title: 'Submit your idea', text: 'Problem, solution, business model and team.' },
   { title: 'Verification', text: 'The Incubation Cell reviews and approves.' },
   { title: 'Mentoring & milestones', text: 'A mentor guides you from idea to revenue.' },
-  { title: 'Secure finance', text: 'Seed funding or an accepted investor offer.' },
+  { title: 'Secure finance', text: 'An investor deal, cleared by the Incubation Cell.' },
   { title: 'Incubated', text: 'Admitted to the incubation programme.' },
 ];
 
@@ -32,14 +32,15 @@ const STAKEHOLDERS = [
   { role: 'student', icon: Rocket, title: 'Student entrepreneurs', points: ['Register & submit startup ideas', 'Track milestones and funding', 'Pitch to investors'], cta: 'Register your startup' },
   { role: 'mentor', icon: UserCheck, title: 'Mentors', points: ['Guide assigned startups', 'Approve milestones & give feedback', 'Schedule mentoring sessions'], cta: 'Join as a mentor', to: '/register?role=mentor' },
   { role: 'investor', icon: Briefcase, title: 'Investors', points: ['Browse verified startups', 'Make offers & review pitch decks', 'Hold diligence meetings'], cta: 'Join as an investor', to: '/register?role=investor' },
-  { role: 'admin', icon: Building2, title: 'Incubation Cell', points: ['Verify startups & assign mentors', 'Approve funding requests', 'Reports & analytics'], cta: 'Administrator login', to: '/login' },
+  { role: 'admin', icon: Building2, title: 'Incubation Cell', points: ['Verify startups & assign mentors', 'Clear, hold or cancel funding deals', 'Reports & analytics'], cta: 'Administrator login', to: '/login' },
 ];
 
 const FAQS = [
   ['Who can apply?', 'Any registered student of the institute can submit a startup idea, individually or with a team. Mentors and investors can register too.'],
-  ['When does a startup become "incubated"?', 'After verification your startup is approved. It is admitted to incubation once it secures finance, either an approved seed-funding request or an investor offer that you accept.'],
+  ['When does a startup become "incubated"?', 'After verification your startup is approved. It is admitted to incubation once it secures finance: an investor offer that you accept and the Incubation Cell clears.'],
   ['How are mentors assigned?', 'The Incubation Cell assigns mentors based on your industry and needs. You can request meetings with your mentor, and they can schedule sessions with you.'],
   ['Can I pitch to investors directly?', 'Yes. Once your startup is approved, open the Investors directory, choose an investor and send a pitch request with your funding ask and pitch deck.'],
+  ['Who decides on funding?', 'Funding is agreed between you and the investor. The Incubation Cell does not grant money; it reviews each accepted deal and clears it, puts it on hold until something is fixed, or cancels it.'],
   ['Is my data safe?', 'Access is role-based, sensitive fields such as phone numbers are encrypted, and every change is recorded in an audit log. Drafts and pending applications are never shown publicly.'],
 ];
 
@@ -91,7 +92,7 @@ export default function Landing() {
               From campus idea to <span className="text-saffron-400">incubated startup</span>, in one portal.
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-indigo-100">
-              {BRAND.name} brings idea submission, verification, mentorship, milestones, seed funding and investor connect together, replacing scattered forms, emails and spreadsheets.
+              {BRAND.name} brings idea submission, verification, mentorship, milestones and investor funding together, replacing scattered forms, emails and spreadsheets.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               {user ? (

@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { Handshake, Undo2, Landmark, Clock, XCircle } from 'lucide-react';
 import api, { errMsg } from '../../api/client';
 import { useApi } from '../../hooks/useApi';
-import { Button, Card, EmptyState, ErrorBox, Loading, PageHeader, StatCard, StatusBadge } from '../../components/ui';
+import { Button, Card, ClearanceBadge, EmptyState, ErrorBox, Loading, PageHeader, StatCard, StatusBadge } from '../../components/ui';
 import { fmtDate, inr, plural, inrShort } from '../../utils/format';
 
 const FILTERS = [['', 'All'], ['pending', 'Awaiting reply'], ['accepted', 'Accepted'], ['declined', 'Declined'], ['withdrawn', 'Withdrawn']];
@@ -24,14 +24,16 @@ export default function Deals() {
 
   if (error && !data) return <ErrorBox error={error} onRetry={reload} />;
   if (!data) return <Loading />;
-  const accepted = data.filter((o) => o.status === 'accepted');
+  const cleared = data.filter((o) => o.status === 'accepted' && o.clearance === 'cleared');
+  const inReview = data.filter((o) => o.status === 'accepted' && ['under_review', 'on_hold'].includes(o.clearance));
   const list = filter ? data.filter((o) => o.status === filter) : data;
 
   return (
     <>
-      <PageHeader title="My offers" subtitle="Every investment offer you've made and how founders responded." actions={<Link to="/startups"><Button icon={Handshake}>Find startups</Button></Link>} />
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard icon={Landmark} label="Committed" value={inrShort(accepted.reduce((s, o) => s + Number(o.amount), 0))} sub={`${plural(accepted.length, 'deal')} closed`} color="green" />
+      <PageHeader title="My offers" subtitle="Every offer you've made. Offers a founder accepts are cleared by the Incubation Cell before the deal is final." actions={<Link to="/startups"><Button icon={Handshake}>Find startups</Button></Link>} />
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard icon={Landmark} label="Committed" value={inrShort(cleared.reduce((s, o) => s + Number(o.amount), 0))} sub={`${plural(cleared.length, 'deal')} cleared`} color="green" />
+        <StatCard icon={Clock} label="With Incubation Cell" value={inReview.length} sub={inReview.length ? `${inrShort(inReview.reduce((s, o) => s + Number(o.amount), 0))} under review / on hold` : 'Nothing awaiting clearance'} color="sky" />
         <StatCard icon={Clock} label="Awaiting reply" value={data.filter((o) => o.status === 'pending').length} color="amber" />
         <StatCard icon={XCircle} label="Declined / withdrawn" value={data.filter((o) => ['declined', 'withdrawn'].includes(o.status)).length} color="rose" />
       </div>
@@ -49,7 +51,10 @@ export default function Deals() {
                 <tr key={o.id}>
                   <td><Link to={`/startups/${o.startupId}`} className="font-medium hover:text-indigo-600">{o.startup.startupName}</Link><p className="text-xs text-slate-500">{o.startup.industry}</p></td>
                   <td className="whitespace-nowrap"><p className="font-semibold">{inr(o.amount)}</p><p className="text-xs text-slate-500">{o.instrument}{o.equity ? ` · ${o.equity}% equity` : ''}</p></td>
-                  <td><StatusBadge status={o.status} /></td>
+                  <td>
+                    <div className="flex flex-wrap gap-1"><StatusBadge status={o.status} />{o.status === 'accepted' && <ClearanceBadge clearance={o.clearance} />}</div>
+                    {o.clearanceNote && <p className="mt-1 max-w-[14rem] text-xs text-slate-500">{o.clearanceNote}</p>}
+                  </td>
                   <td className="max-w-xs text-slate-600">{o.founderNote || '—'}</td>
                   <td className="whitespace-nowrap text-slate-600">{fmtDate(o.createdAt)}</td>
                   <td className="text-right">{o.status === 'pending' && <Button size="sm" variant="ghost" icon={Undo2} onClick={() => withdraw(o)}>Withdraw</Button>}</td>

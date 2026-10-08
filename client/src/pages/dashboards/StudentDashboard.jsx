@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Rocket, CalendarDays, IndianRupee, Target, Plus, ChevronRight, CheckCircle2, Circle, Clock, ListTodo, Bell, Briefcase } from 'lucide-react';
-import { Button, Card, EmptyState, ProgressBar, StatCard, StatusBadge } from '../../components/ui';
+import { Button, Card, ClearanceBadge, EmptyState, ProgressBar, StatCard, StatusBadge } from '../../components/ui';
 import { fmtDate, fmtTime, timeAgo, firstName, inrShort } from '../../utils/format';
 import WelcomeBanner from '../../components/portal/WelcomeBanner';
 
@@ -23,7 +23,8 @@ function MilestoneSteps({ milestones }) {
 }
 
 export default function StudentDashboard({ data, user }) {
-  const { startups, upcomingMeetings, tasks, funding, notifications, offers, investorMeetings } = data;
+  const { startups, upcomingMeetings, tasks, notifications, offers, investorMeetings } = data;
+  const deals = offers.recent.filter((o) => o.status === 'accepted');
   const primary = startups.find((s) => ['incubated', 'approved'].includes(s.status)) || startups[0];
   const mentorNames = (s) => s.assignments.map((a) => a.mentor.user.name).join(', ');
 
@@ -39,7 +40,7 @@ export default function StudentDashboard({ data, user }) {
         <StatCard icon={Rocket} label="My startups" value={startups.length} sub={primary ? `${primary.startupName}: ${primary.status}` : 'Create your first one'} />
         <StatCard icon={Target} label="Milestone progress" value={`${primary?.progress ?? 0}%`} sub={primary?.startupName || '—'} color="green" />
         <StatCard icon={CalendarDays} label="Upcoming meetings" value={upcomingMeetings.length} sub={upcomingMeetings[0] ? `Next: ${fmtDate(upcomingMeetings[0].date)}` : 'None scheduled'} color="sky" />
-        <StatCard icon={IndianRupee} label="Finance secured" value={inrShort(funding.approved + offers.committed)} sub={`${inrShort(funding.approved)} funding · ${inrShort(offers.committed)} investors`} color="amber" />
+        <StatCard icon={IndianRupee} label="Finance secured" value={inrShort(offers.committed)} sub={offers.awaitingClearance ? `${inrShort(offers.awaitingClearance)} awaiting clearance` : 'Cleared investor deals'} color="amber" />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -88,16 +89,16 @@ export default function StudentDashboard({ data, user }) {
                 </ul>
               )}
             </Card>
-            <Card title="Funding status" action={<Link to="/funding" className="text-sm font-medium text-indigo-600 hover:underline">All</Link>}>
-              {funding.recent.length === 0 ? <p className="text-sm text-slate-500">No funding requests yet.</p> : (
+            <Card title="Funding transactions" action={<Link to="/funding" className="text-sm font-medium text-indigo-600 hover:underline">All</Link>}>
+              {deals.length === 0 ? <p className="text-sm text-slate-500">No accepted investor deals yet. <Link to="/investors" className="font-medium text-indigo-700 underline">Pitch to investors</Link></p> : (
                 <ul className="space-y-3">
-                  {funding.recent.map((f) => (
-                    <li key={f.id} className="flex items-center justify-between gap-2">
+                  {deals.map((d) => (
+                    <li key={d.id} className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium">{inrShort(f.amount)} · {f.startup.startupName}</p>
-                        <p className="line-clamp-2 text-xs text-slate-500">{f.purpose}</p>
+                        <p className="text-sm font-medium">{inrShort(d.amount)} · {d.investor.user.name}</p>
+                        <p className="line-clamp-2 text-xs text-slate-500">{d.startup.startupName}{d.clearanceNote ? ` · ${d.clearanceNote}` : ''}</p>
                       </div>
-                      <span className="shrink-0"><StatusBadge status={f.status} /></span>
+                      <span className="shrink-0"><ClearanceBadge clearance={d.clearance} /></span>
                     </li>
                   ))}
                 </ul>

@@ -22,7 +22,7 @@ export default function Footer({ compact = false }) {
               </div>
             </div>
             <p className="mt-4 text-sm leading-relaxed text-indigo-200">
-              A single-window portal for student startups: idea submission, verification, mentorship, milestones, seed funding and investor connect.
+              A single-window portal for student startups: idea submission, verification, mentorship, milestones and investor funding.
             </p>
           </div>
           <div>
