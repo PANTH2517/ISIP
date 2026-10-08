@@ -55,7 +55,7 @@ export default function PublicLayout({ children }) {
               <Link key={l.href} to={l.href} onClick={() => setOpen(false)} className="border-b-2 border-transparent px-4 py-3 text-sm font-medium text-indigo-100 transition hover:bg-white/10 hover:text-white">{l.label}</Link>
             )))}
             <div className="flex flex-wrap items-center gap-2 py-3 md:hidden">
-              <TextSize className="flex border-white/30 bg-white" />
+              <TextSize className="mr-2 flex" onDark />
               {user ? <Link to="/dashboard" className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-indigo-900">Go to my dashboard</Link> : <>
                 <Link to="/login" className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-indigo-900">Login</Link>
                 <Link to="/register" className="rounded-md bg-saffron-500 px-4 py-2 text-sm font-semibold text-white">Register</Link>

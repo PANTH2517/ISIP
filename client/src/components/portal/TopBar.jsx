@@ -22,10 +22,10 @@ function setFont(value) {
 }
 
 /** A- / A / A+ buttons; the choice is applied to <html> and remembered per browser. */
-export function TextSize({ className = '' }) {
+export function TextSize({ className = '', onDark = false }) {
   const font = useSyncExternalStore(subscribe, () => current);
   return (
-    <div className={`items-center rounded-md border border-slate-200 p-0.5 text-xs ${className}`} role="group" aria-label="Text size">
+    <div className={`items-center gap-1 text-sm ${className}`} role="group" aria-label="Text size">
       {SIZES.map(([value, label, title]) => (
         <button
           key={value}
@@ -33,7 +33,9 @@ export function TextSize({ className = '' }) {
           onClick={() => setFont(value)}
           aria-pressed={font === value}
           title={title}
-          className={`rounded px-1.5 py-0.5 font-semibold transition ${font === value ? 'bg-indigo-800 text-white' : 'text-indigo-900 hover:bg-indigo-50'}`}
+          className={`flex h-8 min-w-8 items-center justify-center rounded-md px-1.5 font-bold transition ${font === value
+            ? (onDark ? 'bg-white text-indigo-900' : 'bg-indigo-800 text-white')
+            : (onDark ? 'text-white hover:bg-white/15' : 'text-indigo-900 hover:bg-indigo-50')}`}
         >
           {label}
         </button>
