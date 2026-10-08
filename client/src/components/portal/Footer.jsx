@@ -63,7 +63,7 @@ export default function Footer({ compact = false }) {
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-xs text-indigo-300 lg:px-8">
           <p>© {YEAR} {BRAND.name} · {BRAND.cell}, {BRAND.institute}. All rights reserved.</p>
-          <p>Last updated: {BRAND.lastUpdated} · Best viewed in the latest Chrome, Edge, Firefox or Safari</p>
+          <p>{BRAND.lastUpdated && `Last updated: ${BRAND.lastUpdated} · `}Best viewed in the latest Chrome, Edge, Firefox or Safari</p>
         </div>
       </div>
       <div className="tricolor h-1" />

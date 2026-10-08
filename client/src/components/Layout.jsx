@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import { Avatar, Loading } from './ui';
 import { timeAgo } from '../utils/format';
-import TopBar from './portal/TopBar';
+import TopBar, { TextSize } from './portal/TopBar';
 import Footer from './portal/Footer';
 import { Wordmark } from './portal/Brand';
 
@@ -169,6 +169,10 @@ export default function Layout() {
         </Link>
       </nav>
       <div className="border-t border-slate-200 p-3">
+        <div className="mb-3 flex items-center justify-between sm:hidden">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Text size</span>
+          <TextSize className="flex" />
+        </div>
         <button onClick={handleLogout} className="flex w-full items-center justify-center gap-2 rounded-md border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50">
           <LogOut className="h-4 w-4" /> Log out
         </button>
@@ -188,6 +192,7 @@ export default function Layout() {
             <Wordmark to="/dashboard" compact />
           </div>
           <div className="flex items-center gap-3">
+            <TextSize className="hidden sm:flex" />
             <NotificationBell />
             <Link to="/profile" className="flex items-center gap-2.5 rounded-lg px-2 py-1 hover:bg-slate-50">
               <Avatar name={user.name} className="h-9 w-9 text-xs" />

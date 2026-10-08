@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { LogIn, UserPlus, LayoutDashboard, Menu, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import TopBar from './TopBar';
+import TopBar, { TextSize } from './TopBar';
 import Footer from './Footer';
 import { Wordmark } from './Brand';
 
@@ -26,6 +26,7 @@ export default function PublicLayout({ children }) {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 lg:px-8">
           <Wordmark />
           <div className="hidden items-center gap-2 md:flex">
+            <TextSize className="mr-2 flex" />
             {user ? (
               <Link to="/dashboard" className="inline-flex items-center gap-2 rounded-md bg-indigo-700 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-800">
                 <LayoutDashboard className="h-4 w-4" />Go to my dashboard
@@ -53,7 +54,8 @@ export default function PublicLayout({ children }) {
             ) : (
               <Link key={l.href} to={l.href} onClick={() => setOpen(false)} className="border-b-2 border-transparent px-4 py-3 text-sm font-medium text-indigo-100 transition hover:bg-white/10 hover:text-white">{l.label}</Link>
             )))}
-            <div className="flex gap-2 py-3 md:hidden">
+            <div className="flex flex-wrap items-center gap-2 py-3 md:hidden">
+              <TextSize className="flex border-white/30 bg-white" />
               {user ? <Link to="/dashboard" className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-indigo-900">Go to my dashboard</Link> : <>
                 <Link to="/login" className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-indigo-900">Login</Link>
                 <Link to="/register" className="rounded-md bg-saffron-500 px-4 py-2 text-sm font-semibold text-white">Register</Link>
