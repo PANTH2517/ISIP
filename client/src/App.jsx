@@ -26,6 +26,7 @@ const Investors = lazy(() => import('./pages/admin/Investors'));
 const Deals = lazy(() => import('./pages/investor/Deals'));
 const PersonProfile = lazy(() => import('./pages/PersonProfile'));
 const InvestorDirectory = lazy(() => import('./pages/InvestorDirectory'));
+const Landing = lazy(() => import('./pages/Landing'));
 
 function RequireAuth({ roles, children }) {
   const { user, loading } = useAuth();
@@ -46,6 +47,7 @@ export default function App() {
   return (
     <Suspense fallback={<Loading />}>
       <Routes>
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
         <Route path="/register" element={<GuestOnly><Register /></GuestOnly>} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -75,7 +77,7 @@ export default function App() {
           <Route path="/admin/investors" element={<RequireAuth roles={['admin']}><Investors /></RequireAuth>} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );

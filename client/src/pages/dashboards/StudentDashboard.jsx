@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Rocket, CalendarDays, IndianRupee, Target, Plus, ChevronRight, CheckCircle2, Circle, Clock, ListTodo, Bell, Briefcase } from 'lucide-react';
-import { Button, Card, EmptyState, PageHeader, ProgressBar, StatCard, StatusBadge } from '../../components/ui';
+import { Button, Card, EmptyState, ProgressBar, StatCard, StatusBadge } from '../../components/ui';
 import { fmtDate, fmtTime, timeAgo, firstName, inrShort } from '../../utils/format';
+import WelcomeBanner from '../../components/portal/WelcomeBanner';
 
 function MilestoneSteps({ milestones }) {
   return (
@@ -28,10 +29,10 @@ export default function StudentDashboard({ data, user }) {
 
   return (
     <>
-      <PageHeader
-        title={`Hello, ${firstName(user.name)} 👋`}
+      <WelcomeBanner
+        title={`Hello, ${firstName(user.name)}`}
         subtitle="Here's how your startup journey is going."
-        actions={<Link to="/startups/new"><Button icon={Plus}>New startup</Button></Link>}
+        actions={<Link to="/startups/new"><Button variant="accent" icon={Plus}>New startup</Button></Link>}
       />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

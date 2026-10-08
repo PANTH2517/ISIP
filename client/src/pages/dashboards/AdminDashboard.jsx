@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Doughnut, Bar, Line } from 'react-chartjs-2';
 import { Rocket, UserCheck, Sprout, IndianRupee, ClipboardList, GraduationCap, Landmark } from 'lucide-react';
-import { Badge, Card, PageHeader, StatCard } from '../../components/ui';
+import { Badge, Card, StatCard } from '../../components/ui';
 import { fmtDate, timeAgo, plural, inrShort } from '../../utils/format';
 import { PALETTE, STATUS_COLORS, monthLabel } from '../../utils/charts';
+import WelcomeBanner from '../../components/portal/WelcomeBanner';
 
 export function StatusDoughnut({ byStatus }) {
   const entries = Object.entries(byStatus);
@@ -31,8 +32,8 @@ export function MonthlyLine({ monthly }) {
       data={{
         labels: monthly.map((m) => monthLabel(m.month)),
         datasets: [
-          { label: 'New users', data: monthly.map((m) => m.registrations), borderColor: '#4f46e5', backgroundColor: 'rgba(79,70,229,.1)', fill: true, tension: 0.35 },
-          { label: 'New startups', data: monthly.map((m) => m.startups), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.08)', fill: true, tension: 0.35 },
+          { label: 'New users', data: monthly.map((m) => m.registrations), borderColor: '#1d4b94', backgroundColor: 'rgba(29,75,148,.1)', fill: true, tension: 0.35, cubicInterpolationMode: 'monotone' },
+          { label: 'New startups', data: monthly.map((m) => m.startups), borderColor: '#f26b1d', backgroundColor: 'rgba(242,107,29,.08)', fill: true, tension: 0.35, cubicInterpolationMode: 'monotone' },
         ],
       }}
       options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }}
@@ -46,7 +47,7 @@ export default function AdminDashboard({ data }) {
 
   return (
     <>
-      <PageHeader title="Incubation overview" subtitle="Everything happening in your incubation cell at a glance." />
+      <WelcomeBanner title="Incubation overview" subtitle="Everything happening in the Incubation & Innovation Cell at a glance." />
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <StatCard icon={Rocket} label="Total startups" value={totals.startups} sub={`${plural(totals.drafts, 'draft')} in progress`} />
         <StatCard icon={Sprout} label="Active incubations" value={totals.activeIncubations} sub={`Avg. progress ${totals.averageProgress}%`} color="violet" />

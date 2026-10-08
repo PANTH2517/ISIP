@@ -1,14 +1,15 @@
 import { Link } from 'react-router-dom';
 import { Rocket, Handshake, Landmark, CalendarDays, ChevronRight, Sparkles, Bell } from 'lucide-react';
-import { Badge, Card, EmptyState, PageHeader, ProgressBar, StatCard, StatusBadge } from '../../components/ui';
+import { Badge, Card, EmptyState, ProgressBar, StatCard, StatusBadge } from '../../components/ui';
 import { fmtDate, fmtTime, inr, inrShort, timeAgo, firstName } from '../../utils/format';
+import WelcomeBanner from '../../components/portal/WelcomeBanner';
 
 export default function InvestorDashboard({ data, user }) {
   const { investor, recommended, offers, stats, meetings, availableStartups, notifications } = data;
   return (
     <>
-      <PageHeader
-        title={`Hello, ${firstName(user.name)} 👋`}
+      <WelcomeBanner
+        title={`Hello, ${firstName(user.name)}`}
         subtitle={investor?.firmName ? `${investor.firmName} · ${investor.investorType}` : 'Discover and back promising campus startups.'}
       />
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
