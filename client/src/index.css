@@ -1,23 +1,104 @@
 @import "tailwindcss";
 
+/*
+ * Design system — civic / institutional portal.
+ * The `indigo` scale is re-pointed to a deep navy brand colour and `violet` to a teal accent, so every
+ * existing `indigo-*` / `violet-*` utility picks up the new identity. Saffron and India-green are added
+ * as `saffron-*` and `ingreen-*` for accents.
+ */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Noto Sans", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Poppins", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --color-indigo-50: #eef3fb;
+  --color-indigo-100: #dbe5f5;
+  --color-indigo-200: #b7cbeb;
+  --color-indigo-300: #8aa8da;
+  --color-indigo-400: #5b82c4;
+  --color-indigo-500: #3563ad;
+  --color-indigo-600: #1d4b94;
+  --color-indigo-700: #173d7a;
+  --color-indigo-800: #133264;
+  --color-indigo-900: #0f2850;
+  --color-indigo-950: #0a1b38;
+
+  --color-violet-50: #ecfbf8;
+  --color-violet-100: #cff4ec;
+  --color-violet-200: #a2e7da;
+  --color-violet-300: #6dd2c1;
+  --color-violet-400: #3cb5a4;
+  --color-violet-500: #1f9787;
+  --color-violet-600: #157a6e;
+  --color-violet-700: #146259;
+  --color-violet-800: #134e48;
+  --color-violet-900: #12413c;
+
+  --color-saffron-50: #fff6ed;
+  --color-saffron-100: #ffead4;
+  --color-saffron-200: #ffd0a8;
+  --color-saffron-300: #ffad70;
+  --color-saffron-400: #ff8a3d;
+  --color-saffron-500: #f26b1d;
+  --color-saffron-600: #e05212;
+  --color-saffron-700: #b93c10;
+
+  --color-ingreen-500: #138808;
+  --color-ingreen-600: #0f6e06;
 }
 
 @layer base {
   html, body, #root { height: 100%; }
-  body { @apply bg-slate-50 text-slate-800 antialiased; }
+  html { font-size: 100%; }
+  html[data-font="sm"] { font-size: 93.75%; }
+  html[data-font="lg"] { font-size: 112.5%; }
+  body { @apply bg-[#f3f5f9] text-slate-800 antialiased; }
+  h1, h2, h3, .font-display { font-family: var(--font-display); }
+  :focus-visible { outline: 3px solid var(--color-saffron-400); outline-offset: 2px; }
+
+  /* High-contrast mode (accessibility bar): darker greys, stronger borders, underlined links. */
+  html.hc {
+    --color-slate-300: #6b7280;
+    --color-slate-400: #4b5563;
+    --color-slate-500: #1f2937;
+    --color-slate-600: #111827;
+    --color-slate-200: #9ca3af;
+    --color-slate-100: #d1d5db;
+  }
+  html.hc a { text-decoration: underline; }
+  /* Dark high-contrast view: invert the page, then flip media back so photos keep their colours. */
+  html.hc { background: #fff; filter: invert(1) hue-rotate(180deg) contrast(1.1); }
+  html.hc img, html.hc video, html.hc canvas { filter: invert(1) hue-rotate(180deg); }
 }
 
 /* In the components layer so utility classes (pl-9, w-auto, py-1 …) can override them. */
 @layer components {
   .input {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none transition
-      placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100;
+    @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm outline-none transition
+      placeholder:text-slate-400 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100;
   }
   .label { @apply mb-1 block text-sm font-medium text-slate-700; }
   .table { @apply w-full text-left text-sm; }
-  .table th { @apply border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500; }
+  .table th { @apply border-b-2 border-indigo-100 bg-indigo-50 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-indigo-900; }
   .table td { @apply border-b border-slate-100 px-4 py-3 align-top; }
   .table tr:last-child td { @apply border-b-0; }
+  .table tbody tr:hover td { @apply bg-slate-50/70; }
+
+  /* Saffron / white / green strip used at the very top of the portal. */
+  .tricolor { background: linear-gradient(90deg, #ff9933 0 33.33%, #ffffff 33.33% 66.66%, #138808 66.66% 100%); }
+
+  /* Subtle dotted texture for hero banners. */
+  .hero-pattern {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+
+  /* Notice ticker */
+  .ticker-track { display: inline-flex; gap: 3rem; animation: ticker 40s linear infinite; white-space: nowrap; }
+  .ticker:hover .ticker-track { animation-play-state: paused; }
+  @media (prefers-reduced-motion: reduce) { .ticker-track { animation: none; } }
+}
+
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
