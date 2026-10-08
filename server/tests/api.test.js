@@ -505,3 +505,14 @@ test('reports can be exported as a paginated PDF', async () => {
   assert.equal(pdf.body.subarray(0, 5).toString(), '%PDF-');
   assert.equal((await api.get(`/api/reports/${gen.body.id}/pdf`).set(auth('student'))).status, 403);
 });
+
+// ---------------- Public portal home ----------------
+test('public overview is open to visitors and exposes no personal data', async () => {
+  const res = await api.get('/api/public/overview');
+  assert.equal(res.status, 200);
+  assert.ok(res.body.stats.startups >= res.body.stats.incubated);
+  assert.ok(res.body.showcase.every((s) => ['approved', 'incubated'].includes(s.status)));
+  assert.ok(Array.isArray(res.body.notices) && res.body.notices.length > 0);
+  const body = JSON.stringify(res.body);
+  assert.doesNotMatch(body, /@|password|phone/i);
+});

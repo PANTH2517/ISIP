@@ -23,6 +23,7 @@ import reportRoutes from './routes/reports.js';
 import dashboardRoutes from './routes/dashboard.js';
 import investorRoutes from './routes/investors.js';
 import peopleRoutes from './routes/people.js';
+import publicRoutes from './routes/public.js';
 
 const app = express();
 
@@ -34,6 +35,7 @@ if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
 app.use(auditLogger);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
+app.use('/api/public', publicRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/startups', startupRoutes);
 app.use('/api/documents', documentRoutes);
