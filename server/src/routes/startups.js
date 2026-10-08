@@ -120,7 +120,7 @@ router.patch('/:id/status', authorize('admin'), async (req, res) => {
   if (!TRANSITIONS[startup.status]?.includes(next)) throw new HttpError(400, `Cannot change status from ${startup.status} to ${next}`);
   if (next === 'rejected' && !String(req.body.remarks || '').trim()) throw new HttpError(400, 'Please give a reason for rejection');
   if (next === 'incubated' && !(await financeSummary(startup.id)).financed) {
-    throw new HttpError(400, 'A startup can be incubated only after it secures finance — an approved funding request or an accepted investor offer');
+    throw new HttpError(400, 'A startup can be incubated only after it secures finance: an investor deal accepted by the founder and cleared by the Incubation Cell');
   }
 
   await sequelize.transaction(async (transaction) => {

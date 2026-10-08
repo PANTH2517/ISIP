@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { sequelize, Role, User, Meeting, MeetingRequest, InvestorMeeting, USER_PROFILE_COLUMNS } from './models/index.js';
+import { sequelize, Role, User, Meeting, MeetingRequest, InvestorMeeting, InvestmentInterest, USER_PROFILE_COLUMNS } from './models/index.js';
 import { sweepMeetings } from './services/meetingLifecycle.js';
 import { seedDatabase } from './seed.js';
 import app from './app.js';
@@ -16,12 +16,15 @@ async function start() {
     [Meeting, ['checkedInAt', 'location', 'scheduledBy']],
     [MeetingRequest, ['location']],
     [InvestorMeeting, ['checkedInAt', 'kind', 'awaiting', 'askAmount', 'location', 'deckId']],
+    [InvestmentInterest, ['clearance', 'clearanceNote', 'reviewedAt']],
   ]) {
     const existing = await qi.describeTable(model.getTableName());
     for (const col of columns) {
       if (!existing[col]) await qi.addColumn(model.getTableName(), col, model.getAttributes()[col]);
     }
   }
+  // Deals accepted before the clearance step existed were already counted as finance; keep them cleared.
+  await InvestmentInterest.update({ clearance: 'cleared' }, { where: { status: 'accepted', clearance: null } });
   if (!(await Role.count())) {
     console.log('Empty database detected — loading demo data...');
     await seedDatabase();

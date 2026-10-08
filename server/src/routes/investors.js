@@ -1,7 +1,9 @@
 /**
- * Investor module — browse approved startups (via /api/startups), show investment interest,
- * request meetings with founders; founders can pitch to investors from the investor directory. Founders accept/decline offers; an accepted offer counts as
- * secured finance and moves an approved startup into incubation.
+ * Investor module — funding happens only between founders and investors.
+ * Investors browse approved startups (via /api/startups), make offers and request meetings; founders pitch from
+ * the investor directory and accept/decline offers. An accepted offer is a transaction the Incubation Cell reviews:
+ * it can clear it, put it on hold or cancel it. Only a cleared deal counts as secured finance and moves an
+ * approved startup into incubation.
  */
 import { Router } from 'express';
 import { Op } from 'sequelize';
@@ -36,13 +38,13 @@ router.get('/', authorize('admin'), async (req, res) => {
   const investors = await Investor.findAll({
     include: [
       { model: User, as: 'user', attributes: ['id', 'name', 'email', 'status'] },
-      { model: InvestmentInterest, as: 'interests', attributes: ['id', 'status', 'amount'] },
+      { model: InvestmentInterest, as: 'interests', attributes: ['id', 'status', 'amount', 'clearance'] },
     ],
     order: [[{ model: User, as: 'user' }, 'name', 'ASC']],
   });
   res.json(investors.map((i) => {
     const json = i.toJSON();
-    const accepted = json.interests.filter((x) => x.status === 'accepted');
+    const accepted = json.interests.filter((x) => x.status === 'accepted' && x.clearance === 'cleared');
     return { ...json, interests: undefined, offers: json.interests.length, deals: accepted.length, committed: accepted.reduce((s, x) => s + Number(x.amount), 0) };
   }));
 });
@@ -52,6 +54,7 @@ router.get('/interests', async (req, res) => {
   const where = await scope(req);
   if (req.query.startupId) where.startupId = req.query.startupId;
   if (req.query.status) where.status = req.query.status;
+  if (req.query.clearance) where.clearance = String(req.query.clearance).split(',');
   res.json(await InvestmentInterest.findAll({ where, include: [investorInclude, startupInclude], order: [['createdAt', 'DESC']] }));
 });
 
@@ -73,7 +76,7 @@ router.post('/interests', authorize('investor'), async (req, res) => {
     message: `💼 ${who} is interested in investing ${inr(amount)} in ${startup.startupName}${equity ? ` for ${equity}% equity` : ''}. Review the offer.`,
     type: 'investment', link: `/startups/${startup.id}?tab=investors`,
   });
-  await notify(await adminIds(), { message: `${who} made an offer of ${inr(amount)} to ${startup.startupName}`, type: 'investment', link: '/admin/investors' }, { email: false });
+  await notify(await adminIds(), { message: `${who} made an offer of ${inr(amount)} to ${startup.startupName}`, type: 'investment', link: '/funding' }, { email: false });
   res.status(201).json(interest);
 });
 
@@ -95,19 +98,46 @@ router.patch('/interests/:id/respond', authorize('student'), async (req, res) =>
   const startup = await loadStartup(req, interest.startupId, { ownerOnly: true });
   if (interest.status !== 'pending') throw new HttpError(400, `This offer is already ${interest.status}`);
   if (decision === 'accepted' && !INVESTABLE.includes(startup.status)) throw new HttpError(400, 'Only approved startups can accept investment');
-  await interest.update({ status: decision, founderNote: note || null, respondedAt: new Date() });
+  // An accepted offer becomes a transaction awaiting the Incubation Cell's clearance.
+  await interest.update({ status: decision, founderNote: note || null, respondedAt: new Date(), clearance: decision === 'accepted' ? 'under_review' : null });
 
-  const verb = decision === 'accepted' ? 'accepted 🎉' : 'declined';
+  const verb = decision === 'accepted' ? 'accepted 🎉 It is now with the Incubation Cell for clearance' : 'declined';
   await notify(interest.investor.userId, {
     message: `${startup.startupName} ${verb} your offer of ${inr(interest.amount)}.${note ? ` Note: ${note}` : ''}`, type: 'investment', link: '/investor/deals',
   });
-  let incubated = false;
   if (decision === 'accepted') {
-    await notify([...(await adminIds()), ...(await mentorUserIdsForStartup(startup.id))], {
-      message: `${startup.startupName} accepted ${inr(interest.amount)} from ${label(interest.investor)}.`, type: 'investment', link: `/startups/${startup.id}?tab=investors`,
-    }, { email: false });
-    incubated = await incubateIfFinanced(startup.id, `${inr(interest.amount)} from ${label(interest.investor)}`);
+    await notify(await adminIds(), {
+      message: `Transaction to review: ${startup.startupName} accepted ${inr(interest.amount)} from ${label(interest.investor)}.`, type: 'investment', link: '/funding',
+    });
   }
+  res.json({ interest });
+});
+
+// ---------- Incubation Cell review of accepted deals ----------
+const CLEARANCE_ACTIONS = { clear: 'cleared', hold: 'on_hold', cancel: 'cancelled' };
+
+router.patch('/interests/:id/clearance', authorize('admin'), async (req, res) => {
+  const next = CLEARANCE_ACTIONS[req.body.action];
+  if (!next) throw new HttpError(400, 'Action must be clear, hold or cancel');
+  const note = String(req.body.note || '').trim();
+  if (next !== 'cleared' && !note) throw new HttpError(400, `Please add a reason for ${next === 'on_hold' ? 'putting the transaction on hold' : 'cancelling the transaction'}`);
+  const interest = await InvestmentInterest.findByPk(req.params.id, { include: [investorInclude, startupInclude] });
+  if (!interest || interest.status !== 'accepted') throw new HttpError(404, 'Transaction not found');
+  if (!['under_review', 'on_hold'].includes(interest.clearance)) throw new HttpError(400, `This transaction is already ${interest.clearance}`);
+  if (next === interest.clearance) throw new HttpError(400, 'This transaction is already on hold');
+  await interest.update({ clearance: next, clearanceNote: note || null, reviewedAt: new Date() });
+
+  const deal = `${inr(interest.amount)} from ${label(interest.investor)} to ${interest.startup.startupName}`;
+  const message = {
+    cleared: `✅ Transaction cleared: ${deal}.`,
+    on_hold: `⏸ Transaction on hold: ${deal}. Reason: ${note}`,
+    cancelled: `Transaction cancelled: ${deal}. Reason: ${note}`,
+  }[next];
+  await notify([interest.startup.createdById], { message, type: 'investment', link: `/startups/${interest.startupId}?tab=investors` });
+  await notify([interest.investor.userId], { message, type: 'investment', link: '/investor/deals' });
+  if (next === 'cleared') await notify(await mentorUserIdsForStartup(interest.startupId), { message, type: 'investment', link: `/startups/${interest.startupId}` }, { email: false });
+  // A cleared deal is secured finance, which moves an approved startup into incubation.
+  const incubated = next === 'cleared' ? await incubateIfFinanced(interest.startupId, `${inr(interest.amount)} from ${label(interest.investor)}`) : false;
   res.json({ interest, incubated });
 });
 

@@ -2,7 +2,7 @@
 import { Router } from 'express';
 import { Op } from 'sequelize';
 import {
-  Startup, User, Mentor, MentorAssignment, Milestone, MilestoneUpdate, FundingRequest, Meeting, MeetingRequest, Notification, AuditLog,
+  Startup, User, Mentor, MentorAssignment, Milestone, MilestoneUpdate, Meeting, MeetingRequest, Notification, AuditLog,
   Investor, InvestmentInterest, InvestorMeeting,
 } from '../models/index.js';
 import { authenticate } from '../middleware/auth.js';
@@ -36,9 +36,8 @@ async function studentDashboard(req) {
     order: [['createdAt', 'DESC'], [{ model: Milestone, as: 'milestones' }, 'order', 'ASC']],
   });
   const ids = startups.map((s) => s.id);
-  const [upcomingMeetings, funding, pendingMeetingRequests, offers, investorMeetings, finance] = await Promise.all([
+  const [upcomingMeetings, pendingMeetingRequests, offers, investorMeetings, finance] = await Promise.all([
     Meeting.findAll({ where: { startupId: ids, status: 'scheduled', date: { [Op.gte]: today() } }, include: [startupRef, mentorUser], order: [['date', 'ASC'], ['time', 'ASC']], limit: 5 }),
-    FundingRequest.findAll({ where: { startupId: ids }, include: [startupRef], order: [['requestDate', 'DESC']] }),
     MeetingRequest.count({ where: { startupId: ids, status: 'pending' } }),
     InvestmentInterest.findAll({ where: { startupId: ids }, include: [startupRef, investorUser], order: [['createdAt', 'DESC']] }),
     InvestorMeeting.findAll({ where: { startupId: ids, status: ['pending', 'accepted'], date: { [Op.gte]: today() } }, include: [startupRef, investorUser], order: [['date', 'ASC']] }),
@@ -54,9 +53,6 @@ async function studentDashboard(req) {
       if (next && next.status !== 'submitted') tasks.push({ text: `Submit progress for milestone "${next.name}" (${s.startupName})`, link: `/startups/${s.id}?tab=milestones` });
     }
   }
-  for (const f of funding.filter((f) => f.status === 'modification_requested')) {
-    tasks.push({ text: `Update funding request for ${f.startup.startupName} — changes requested`, link: `/startups/${f.startupId}?tab=funding` });
-  }
   for (const o of offers.filter((o) => o.status === 'pending')) {
     tasks.push({ text: `Respond to ₹${Number(o.amount).toLocaleString('en-IN')} offer from ${o.investor.user.name} (${o.startup.startupName})`, link: `/startups/${o.startupId}?tab=investors` });
   }
@@ -64,23 +60,25 @@ async function studentDashboard(req) {
     tasks.push({ text: `Confirm investor meeting with ${m.investor.user.name} on ${m.date}`, link: `/startups/${m.startupId}?tab=investors` });
   }
   for (const s of startups.filter((s) => s.status === 'approved')) {
-    tasks.push({ text: `Secure finance for "${s.startupName}" to enter incubation — request funding or accept an investor offer`, link: `/startups/${s.id}?tab=investors` });
+    const f = finance[s.id];
+    tasks.push(f?.awaitingDeals
+      ? { text: `"${s.startupName}" has ${f.awaitingDeals === 1 ? 'a deal' : `${f.awaitingDeals} deals`} awaiting Incubation Cell clearance`, link: '/funding' }
+      : { text: `Secure finance for "${s.startupName}" to enter incubation — pitch to investors or accept an offer`, link: '/investors' });
   }
   if (!startups.length) tasks.push({ text: 'Create your first startup profile', link: '/startups/new' });
 
   return {
     startups: startups.map((s) => ({ ...s.toJSON(), finance: finance[s.id] })),
-    offers: { recent: offers.slice(0, 5), pending: offers.filter((o) => o.status === 'pending').length, committed: offers.filter((o) => o.status === 'accepted').reduce((t, o) => t + Number(o.amount), 0) },
+    offers: {
+      recent: offers.slice(0, 5),
+      pending: offers.filter((o) => o.status === 'pending').length,
+      committed: offers.filter((o) => o.status === 'accepted' && o.clearance === 'cleared').reduce((t, o) => t + Number(o.amount), 0),
+      awaitingClearance: offers.filter((o) => o.status === 'accepted' && ['under_review', 'on_hold'].includes(o.clearance)).reduce((t, o) => t + Number(o.amount), 0),
+    },
     investorMeetings,
     upcomingMeetings,
     pendingMeetingRequests,
     tasks,
-    funding: {
-      recent: funding.slice(0, 5),
-      requested: funding.reduce((s, f) => s + Number(f.amount), 0),
-      approved: funding.filter((f) => f.status === 'approved').reduce((s, f) => s + Number(f.approvedAmount || 0), 0),
-      pending: funding.filter((f) => f.status === 'pending').length,
-    },
   };
 }
 
@@ -121,7 +119,7 @@ async function investorDashboard(req) {
     .sort((a, b) => Number(focus.includes(b.industry.toLowerCase())) - Number(focus.includes(a.industry.toLowerCase())))
     .slice(0, 6)
     .map((s) => ({ ...enrich(s), matchesFocus: focus.includes(s.industry.toLowerCase()) }));
-  const accepted = offers.filter((o) => o.status === 'accepted');
+  const accepted = offers.filter((o) => o.status === 'accepted' && o.clearance === 'cleared');
   return {
     investor,
     availableStartups: startups.length,
@@ -132,20 +130,21 @@ async function investorDashboard(req) {
       pending: offers.filter((o) => o.status === 'pending').length,
       deals: accepted.length,
       committed: accepted.reduce((t, o) => t + Number(o.amount), 0),
+      awaitingClearance: offers.filter((o) => o.status === 'accepted' && ['under_review', 'on_hold'].includes(o.clearance)).length,
     },
     meetings,
   };
 }
 
 async function adminDashboard() {
-  const [stats, pendingStartups, pendingFunding, recentActivity, awaitingFinance] = await Promise.all([
+  const [stats, pendingStartups, transactionsToReview, recentActivity, awaitingFinance] = await Promise.all([
     summary(),
     Startup.findAll({ where: { status: 'pending' }, include: [{ model: User, as: 'founder', attributes: ['id', 'name'] }], order: [['submittedAt', 'ASC']], limit: 6 }),
-    FundingRequest.findAll({ where: { status: 'pending' }, include: [startupRef], order: [['requestDate', 'ASC']], limit: 6 }),
+    InvestmentInterest.findAll({ where: { status: 'accepted', clearance: ['under_review', 'on_hold'] }, include: [startupRef, investorUser], order: [['respondedAt', 'ASC']], limit: 6 }),
     AuditLog.findAll({ include: [{ model: User, as: 'user', attributes: ['id', 'name'] }], order: [['createdAt', 'DESC']], limit: 8 }),
     Startup.findAll({ where: { status: 'approved' }, attributes: ['id', 'startupName', 'industry'], order: [['updatedAt', 'ASC']] }),
   ]);
-  return { stats, pendingStartups, pendingFunding, recentActivity, awaitingFinance };
+  return { stats, pendingStartups, transactionsToReview, recentActivity, awaitingFinance };
 }
 
 router.get('/', async (req, res) => {

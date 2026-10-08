@@ -16,7 +16,7 @@ import { pathToFileURL } from 'url';
 import bcrypt from 'bcryptjs';
 import PDFDocument from 'pdfkit';
 import {
-  sequelize, Role, User, Mentor, Startup, StartupMember, MentorAssignment, Milestone, MilestoneUpdate, FundingRequest,
+  sequelize, Role, User, Mentor, Startup, StartupMember, MentorAssignment, Milestone, MilestoneUpdate,
   MeetingRequest, Meeting, Document, Workshop, WorkshopRegistration, Notification, Feedback, DEFAULT_MILESTONES,
   Investor, InvestmentInterest, InvestorMeeting,
 } from './models/index.js';
@@ -41,6 +41,8 @@ function writeSamplePdf(fileName, title, lines) {
 
 export async function seedDatabase({ reset = false } = {}) {
   if (reset) {
+    // Tables of removed models (admin-granted funding requests) would block dropping the tables they reference.
+    await sequelize.getQueryInterface().dropTable('FundingRequests');
     await sequelize.sync({ force: true });
     for (const f of fs.readdirSync(UPLOAD_DIR)) if (f.startsWith('seed-')) fs.unlinkSync(path.join(UPLOAD_DIR, f));
   }
@@ -48,7 +50,7 @@ export async function seedDatabase({ reset = false } = {}) {
   const [student, mentor, admin, investorRole] = await Role.bulkCreate([
     { roleName: 'student', description: 'Student Entrepreneur — submits and manages startups' },
     { roleName: 'mentor', description: 'Mentor — reviews and guides assigned startups' },
-    { roleName: 'admin', description: 'Incubation Manager — verifies startups, assigns mentors, approves funding' },
+    { roleName: 'admin', description: 'Incubation Manager — verifies startups, assigns mentors, reviews funding transactions' },
     { roleName: 'investor', description: 'Investor — browses approved startups and makes investment offers' },
   ]);
 
@@ -201,13 +203,6 @@ export async function seedDatabase({ reset = false } = {}) {
     });
   }
 
-  await FundingRequest.bulkCreate([
-    { startupId: agri.id, purpose: 'Manufacture 200 sensor units for pilot expansion', amount: 250000, approvedAmount: 200000, status: 'approved', requestDate: daysFromNow(-60), decidedAt: daysFromNow(-55), adminRemarks: 'Approved ₹2L from seed fund; balance on next milestone.', businessPlanId: created['seed-agri-bplan.pdf'].id },
-    { startupId: agri.id, purpose: 'Field staff and marketing for 3 new districts', amount: 150000, status: 'pending', requestDate: daysFromNow(-3), businessPlanId: created['seed-agri-bplan.pdf'].id, supportingDocumentId: created['seed-agri-pitch-v2.pdf'].id },
-    { startupId: medi.id, purpose: 'Prototype pill boxes (50 units)', amount: 120000, status: 'modification_requested', requestDate: daysFromNow(-12), decidedAt: daysFromNow(-8), adminRemarks: 'Please attach vendor quotations and a unit-cost breakdown.' },
-    { startupId: eats.id, purpose: 'Cloud hosting and payment gateway setup', amount: 40000, status: 'pending', requestDate: daysFromNow(-2) },
-  ]);
-
   const r1 = await MeetingRequest.create({ startupId: agri.id, mentorId: priya.id, requestedById: aarav.id, requestedDate: dateOnly(3), requestedTime: '16:30', agenda: 'Review customer testing report and plan revenue milestone', status: 'accepted' });
   await Meeting.create({ meetingRequestId: r1.id, startupId: agri.id, mentorId: priya.id, date: dateOnly(3), time: '16:30', agenda: r1.agenda, status: 'scheduled', location: 'https://meet.google.com/agr-snse-mtr' });
   // A session the mentor scheduled directly.
@@ -229,7 +224,12 @@ export async function seedDatabase({ reset = false } = {}) {
 
   // Investor module — AgriSense closed an angel round; MediTrack and CampusEats have open offers / meeting requests.
   await InvestmentInterest.bulkCreate([
-    { investorId: vikram.id, startupId: agri.id, amount: 1000000, equity: 8, instrument: 'Equity', status: 'accepted', message: 'Impressive field traction. Happy to lead your pre-seed.', founderNote: 'Excited to partner with Sahyadri Angels!', respondedAt: daysFromNow(-25), createdAt: daysFromNow(-35) },
+    // Accepted and cleared by the Incubation Cell: this is AgriSense's secured finance.
+    { investorId: vikram.id, startupId: agri.id, amount: 1000000, equity: 8, instrument: 'Equity', status: 'accepted', message: 'Impressive field traction. Happy to lead your pre-seed.', founderNote: 'Excited to partner with Sahyadri Angels!', respondedAt: daysFromNow(-25), createdAt: daysFromNow(-35), clearance: 'cleared', clearanceNote: 'Term sheet and investor KYC verified.', reviewedAt: daysFromNow(-24) },
+    // Accepted by the founder, waiting for the Incubation Cell to clear it.
+    { investorId: neha.id, startupId: eats.id, amount: 1500000, equity: 6, instrument: 'SAFE', status: 'accepted', message: 'Campus food is a great wedge. Happy to back the pilot.', founderNote: 'Thrilled to have Blue Lotus on board.', respondedAt: daysFromNow(-1), createdAt: daysFromNow(-6), clearance: 'under_review' },
+    // Put on hold by the Incubation Cell until paperwork arrives.
+    { investorId: neha.id, startupId: medi.id, amount: 1000000, instrument: 'Grant', status: 'accepted', message: 'A small grant to fund your clinic pilot.', founderNote: 'Thank you!', respondedAt: daysFromNow(-9), createdAt: daysFromNow(-14), clearance: 'on_hold', clearanceNote: 'Waiting for the signed grant agreement.', reviewedAt: daysFromNow(-7) },
     { investorId: vikram.id, startupId: medi.id, amount: 500000, equity: 10, instrument: 'Convertible Note', status: 'pending', message: 'We like the clinic-led distribution. Open to a convertible note with a 20% discount.', createdAt: daysFromNow(-3) },
     { investorId: neha.id, startupId: agri.id, amount: 2500000, equity: 15, instrument: 'Equity', status: 'declined', message: 'Interested in a larger round.', founderNote: 'Not raising at this valuation right now.', respondedAt: daysFromNow(-20), createdAt: daysFromNow(-28) },
   ]);
@@ -257,12 +257,12 @@ export async function seedDatabase({ reset = false } = {}) {
   ]);
 
   await Notification.bulkCreate([
-    { userId: aarav.id, type: 'funding', message: 'Funding approved for AgriSense: ₹2,00,000 🎉', link: `/startups/${agri.id}?tab=funding`, isRead: true },
+    { userId: aarav.id, type: 'investment', message: '✅ Transaction cleared: ₹10,00,000 from Vikram Malhotra (Sahyadri Angels) to AgriSense.', link: `/startups/${agri.id}?tab=investors`, isRead: true },
     { userId: aarav.id, type: 'meeting', message: `Meeting confirmed with Priya Sharma on ${humanSlot(dateOnly(3), '16:30')}`, link: '/meetings' },
     { userId: aarav.id, type: 'workshop', message: 'Your certificate for "Financial Modelling Basics" is ready to download.', link: '/workshops' },
     { userId: priyaU.id, type: 'milestone', message: 'AgriSense submitted "Customer Testing" for review', link: `/startups/${agri.id}?tab=milestones` },
     { userId: rahulU.id, type: 'mentor', message: 'You have been assigned to mentor "MediTrack". Please accept the assignment.', link: '/mentor/startups' },
-    { userId: riya.id, type: 'funding', message: 'Modification requested on your funding request for MediTrack. Remarks: Please attach vendor quotations.', link: `/startups/${medi.id}?tab=funding` },
+    { userId: riya.id, type: 'investment', message: '⏸ Transaction on hold: ₹10,00,000 from Neha Kapoor (Blue Lotus Ventures) to MediTrack. Reason: Waiting for the signed grant agreement.', link: `/startups/${medi.id}?tab=investors` },
     { userId: meera.id, type: 'startup', message: 'Startup "FinFlow" has been rejected. Remarks: Business model needs clearer revenue path.', link: `/startups/${fin.id}` },
     { userId: riya.id, type: 'investment', message: '💼 Vikram Malhotra (Sahyadri Angels) is interested in investing ₹5,00,000 in MediTrack for 10% equity. Review the offer.', link: `/startups/${medi.id}?tab=investors` },
     { userId: kabir.id, type: 'investment', message: 'Neha Kapoor (Blue Lotus Ventures) requested an investor meeting for CampusEats.', link: `/startups/${eats.id}?tab=investors` },

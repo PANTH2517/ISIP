@@ -132,21 +132,10 @@ test('mentor approval of a milestone update recalculates progress', async () => 
   assert.equal((await api.post(`/api/milestones/updates/${pending.id}/review`).set(auth('mentor')).send({ decision: 'approved' })).status, 400, 'cannot review twice');
 });
 
-// ---------------- Module 5: Funding ----------------
-test('funding: validation, admin decision and modification flow', async () => {
-  assert.equal((await api.post('/api/funding').set(auth('student')).send({ startupId: 1, purpose: 'x', amount: -5 })).status, 400);
-  assert.equal((await api.post('/api/funding').set(auth('other')).send({ startupId: 4, purpose: 'x', amount: 100 })).status, 400, 'pending startup cannot request funding');
-
-  const req = await api.post('/api/funding').set(auth('student')).send({ startupId: 1, purpose: 'Servers', amount: 50000 });
-  assert.equal(req.status, 201);
-  const mod = await api.patch(`/api/funding/${req.body.id}/decision`).set(auth('admin')).send({ status: 'modification_requested', adminRemarks: 'Add quotes' });
-  assert.equal(mod.body.status, 'modification_requested');
-  const resub = await api.put(`/api/funding/${req.body.id}`).set(auth('student')).send({ purpose: 'Servers (with quotes)', amount: 45000 });
-  assert.equal(resub.body.status, 'pending');
-  assert.equal((await api.patch(`/api/funding/${req.body.id}/decision`).set(auth('admin')).send({ status: 'approved', approvedAmount: 99999 })).status, 400, 'cannot exceed requested');
-  const ok = await api.patch(`/api/funding/${req.body.id}/decision`).set(auth('admin')).send({ status: 'approved', approvedAmount: 40000 });
-  assert.equal(ok.body.status, 'approved');
-  assert.equal((await api.put(`/api/funding/${req.body.id}`).set(auth('student')).send({ purpose: 'x', amount: 1 })).status, 400, 'approved request is locked');
+// ---------------- Module 5: Funding (student ↔ investor, cleared by the Incubation Cell) ----------------
+test('there is no admin-granted funding: the old funding-request API is gone', async () => {
+  assert.equal((await api.post('/api/funding').set(auth('student')).send({ startupId: 1, purpose: 'x', amount: 100 })).status, 404);
+  assert.equal((await api.get('/api/funding').set(auth('admin'))).status, 404);
 });
 
 // ---------------- Module 6: Meetings ----------------
@@ -181,7 +170,7 @@ test('workshop registration, attendance and certificate', async () => {
 // ---------------- Module 9 & 10: Notifications, reports, audit ----------------
 test('notifications are created by workflow events', async () => {
   const res = await api.get('/api/notifications').set(auth('student'));
-  assert.ok(res.body.items.some((n) => n.message.includes('Funding approved')));
+  assert.ok(res.body.items.some((n) => /Milestone .* approved for AgriSense/.test(n.message)), 'mentor approval notified the founder');
   assert.ok(res.body.unread > 0);
   await api.patch('/api/notifications/read-all').set(auth('student'));
   assert.equal((await api.get('/api/notifications').set(auth('student'))).body.unread, 0);
@@ -201,7 +190,7 @@ test('state-changing requests are audit-logged', async () => {
   await new Promise((r) => setTimeout(r, 100));
   const logs = await api.get('/api/reports/audit/logs').set(auth('admin'));
   assert.ok(logs.body.some((l) => l.action === 'Login'));
-  assert.ok(logs.body.some((l) => l.path.startsWith('/api/funding')));
+  assert.ok(logs.body.some((l) => l.path.startsWith('/api/milestones')));
 });
 
 // ---------------- Investor module + "incubated only once financed" ----------------
@@ -214,23 +203,39 @@ test('investors only see approved/incubated startups and cannot reach internal d
   assert.equal((await api.get('/api/startups/4').set(auth('investor'))).status, 403, 'pending startup hidden');
   assert.equal((await api.get('/api/startups/2').set(auth('investor'))).status, 200);
   assert.equal((await api.get('/api/documents?startupId=1').set(auth('investor'))).status, 200, 'can read pitch documents');
-  assert.equal((await api.get('/api/funding').set(auth('investor'))).status, 403);
+  assert.equal((await api.patch('/api/investors/interests/1/clearance').set(auth('investor')).send({ action: 'clear' })).status, 403, 'only the Incubation Cell clears deals');
   assert.equal((await api.get('/api/feedback?startupId=1').set(auth('investor'))).status, 403);
   assert.equal((await api.put('/api/startups/2').set(auth('investor')).send({ startupName: 'x' })).status, 403);
 });
 
 test('admin cannot incubate an approved startup without finance', async () => {
-  // CampusEats (id 3) is approved with only a pending funding request.
+  // CampusEats (id 3) is approved; its accepted deal is still under review, so it is not financed yet.
   const res = await api.patch('/api/startups/3/status').set(auth('admin')).send({ status: 'incubated' });
   assert.equal(res.status, 400);
   assert.match(res.body.message, /secures finance/);
 });
 
-test('approving funding auto-incubates the startup', async () => {
-  const pending = (await api.get('/api/funding?startupId=3&status=pending').set(auth('admin'))).body[0];
-  const res = await api.patch(`/api/funding/${pending.id}/decision`).set(auth('admin')).send({ status: 'approved' });
-  assert.equal(res.body.incubated, true);
+test('admin can hold, then clear a transaction; clearing incubates the startup', async () => {
+  const [deal] = (await api.get('/api/investors/interests?startupId=3&clearance=under_review').set(auth('admin'))).body;
+  assert.ok(deal, 'CampusEats has a deal awaiting clearance');
+  const url = `/api/investors/interests/${deal.id}/clearance`;
+  assert.equal((await api.patch(url).set(auth('other')).send({ action: 'clear' })).status, 403, 'founders cannot clear deals');
+  assert.equal((await api.patch(url).set(auth('admin')).send({ action: 'approve' })).status, 400, 'unknown action');
+  assert.equal((await api.patch(url).set(auth('admin')).send({ action: 'hold' })).status, 400, 'a hold needs a reason');
+
+  const held = await api.patch(url).set(auth('admin')).send({ action: 'hold', note: 'Need the signed SAFE' });
+  assert.equal(held.status, 200);
+  assert.equal(held.body.interest.clearance, 'on_hold');
+  assert.equal((await api.get('/api/startups/3').set(auth('admin'))).body.status, 'approved', 'a held deal is not finance');
+  assert.equal((await api.patch(url).set(auth('admin')).send({ action: 'hold', note: 'again' })).status, 400, 'already on hold');
+
+  const cleared = await api.patch(url).set(auth('admin')).send({ action: 'clear' });
+  assert.equal(cleared.body.interest.clearance, 'cleared');
+  assert.equal(cleared.body.incubated, true);
   assert.equal((await api.get('/api/startups/3').set(auth('admin'))).body.status, 'incubated');
+  assert.equal((await api.patch(url).set(auth('admin')).send({ action: 'cancel', note: 'x' })).status, 400, 'a cleared deal is final');
+  const founderNotes = await api.get('/api/notifications').set(auth('other'));
+  assert.ok(founderNotes.body.items.some((n) => n.message.includes('Transaction cleared')));
 });
 
 test('investor offer → founder accepts → startup is financed and incubated', async () => {
@@ -246,12 +251,25 @@ test('investor offer → founder accepts → startup is financed and incubated',
   assert.equal((await api.patch(`/api/investors/interests/${offer.id}/respond`).set(auth('other')).send({ decision: 'accepted' })).status, 403, 'only the founder responds');
   const res = await api.patch(`/api/investors/interests/${offer.id}/respond`).set(auth('riya')).send({ decision: 'accepted', note: 'Welcome aboard' });
   assert.equal(res.status, 200);
-  assert.equal(res.body.incubated, true);
-  const s = await api.get('/api/startups/2').set(auth('riya'));
-  assert.equal(s.body.status, 'incubated');
-  assert.equal(s.body.finance.investmentCommitted, 500000);
+  assert.equal(res.body.interest.clearance, 'under_review', 'accepted deals go to the Incubation Cell');
+  let s = await api.get('/api/startups/2').set(auth('riya'));
+  assert.equal(s.body.status, 'approved', 'not incubated until cleared');
+  assert.equal(s.body.finance.total, 0);
+  assert.equal(s.body.finance.awaitingClearance, 1500000, 'this deal plus the one on hold');
   const notes = await api.get('/api/notifications').set(auth('investor'));
   assert.ok(notes.body.items.some((n) => n.message.includes('accepted your offer')));
+
+  // The Incubation Cell cancels the deal that was on hold (reason required) and clears the new one.
+  const [held] = (await api.get('/api/investors/interests?startupId=2&clearance=on_hold').set(auth('admin'))).body;
+  assert.equal((await api.patch(`/api/investors/interests/${held.id}/clearance`).set(auth('admin')).send({ action: 'cancel' })).status, 400);
+  const cancelled = await api.patch(`/api/investors/interests/${held.id}/clearance`).set(auth('admin')).send({ action: 'cancel', note: 'Agreement never arrived' });
+  assert.equal(cancelled.body.interest.clearance, 'cancelled');
+  assert.equal(cancelled.body.incubated, false);
+  const cleared = await api.patch(`/api/investors/interests/${offer.id}/clearance`).set(auth('admin')).send({ action: 'clear' });
+  assert.equal(cleared.body.incubated, true);
+  s = await api.get('/api/startups/2').set(auth('riya'));
+  assert.equal(s.body.status, 'incubated');
+  assert.equal(s.body.finance.total, 500000, 'only the cleared deal counts');
 });
 
 test('investor meetings: request, founder reschedules, investor withdraws offer', async () => {
@@ -457,7 +475,7 @@ test('data limits: over-long text and absurd amounts are rejected with clear mes
   const long = await api.post('/api/startups').set(auth('student')).send({ startupName: 'x'.repeat(300), industry: 'SaaS' });
   assert.equal(long.status, 400);
   assert.match(long.body.message, /Startup Name must be at most 150 characters/);
-  const huge = await api.post('/api/funding').set(auth('student')).send({ startupId: 1, purpose: 'x', amount: 1e15 });
+  const huge = await api.post('/api/investors/interests').set(auth('investor')).send({ startupId: 1, amount: 1e15 });
   assert.equal(huge.status, 400);
   assert.match(huge.body.message, /too large/);
 });

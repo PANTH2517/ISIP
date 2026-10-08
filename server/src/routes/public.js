@@ -4,7 +4,7 @@
  */
 import { Router } from 'express';
 import { Op } from 'sequelize';
-import { Startup, Workshop, Mentor, Investor, User, Role, FundingRequest, InvestmentInterest } from '../models/index.js';
+import { Startup, Workshop, Mentor, Investor, User, Role, InvestmentInterest } from '../models/index.js';
 import { today } from '../utils/http.js';
 
 const router = Router();
@@ -14,14 +14,13 @@ const TTL = 60 * 1000; // public stats are cached for a minute
 
 async function overview() {
   const activeUsers = (roleName) => User.count({ where: { status: 'active' }, include: [{ model: Role, as: 'role', where: { roleName }, attributes: [] }] });
-  const [startups, incubated, mentors, investors, students, funding, investments, workshopsHeld, upcoming, showcase, recentlyIncubated] = await Promise.all([
+  const [startups, incubated, mentors, investors, students, investments, workshopsHeld, upcoming, showcase, recentlyIncubated] = await Promise.all([
     Startup.count({ where: { status: { [Op.in]: ['pending', 'approved', 'incubated'] } } }),
     Startup.count({ where: { status: 'incubated' } }),
     activeUsers('mentor'),
     activeUsers('investor'),
     activeUsers('student'),
-    FundingRequest.sum('approvedAmount', { where: { status: 'approved' } }),
-    InvestmentInterest.sum('amount', { where: { status: 'accepted' } }),
+    InvestmentInterest.sum('amount', { where: { status: 'accepted', clearance: 'cleared' } }),
     Workshop.count({ where: { date: { [Op.lt]: today() }, status: { [Op.ne]: 'cancelled' } } }),
     Workshop.findAll({ where: { date: { [Op.gte]: today() }, status: 'upcoming' }, attributes: ['id', 'title', 'type', 'date', 'time', 'venue', 'description'], order: [['date', 'ASC']], limit: 5 }),
     Startup.findAll({ where: { status: { [Op.in]: ['incubated', 'approved'] } }, attributes: ['id', 'startupName', 'industry', 'description', 'status', 'progress'], order: [['status', 'DESC'], ['progress', 'DESC']], limit: 6 }),
@@ -42,7 +41,7 @@ async function overview() {
       mentors,
       investors,
       students,
-      financeCommitted: Number(funding || 0) + Number(investments || 0),
+      financeCommitted: Number(investments || 0),
       workshopsHeld,
       industries: new Set(industries.map((s) => s.industry)).size,
     },
