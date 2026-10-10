@@ -6,12 +6,37 @@ import app from './app.js';
 
 const PORT = Number(process.env.PORT || 5000);
 
+/** A password-free summary of DATABASE_URL, to spot a wrong user, host or placeholder in the logs. */
+export function describeDatabaseUrl(raw) {
+  if (!raw) return 'DATABASE_URL is not set (using SQLite).';
+  let u;
+  try {
+    u = new URL(raw.trim());
+  } catch {
+    return 'DATABASE_URL is not a valid URL (check for spaces or unencoded special characters).';
+  }
+  const password = decodeURIComponent(u.password || '');
+  const notes = [];
+  if (!password) notes.push('no password');
+  if (/[[\]]/.test(raw)) notes.push('contains [ or ] (placeholder brackets left in?)');
+  if (/YOUR-PASSWORD/i.test(raw)) notes.push('still contains YOUR-PASSWORD');
+  if (u.hostname.endsWith('pooler.supabase.com') && !u.username.includes('.')) notes.push('Supabase pooler needs the user "postgres.<project-ref>"');
+  if (raw !== raw.trim()) notes.push('has leading/trailing spaces');
+  return `Using user="${decodeURIComponent(u.username)}" host="${u.hostname}" port="${u.port || '5432'}" database="${u.pathname.slice(1)}" `
+    + `password=${password.length} characters${notes.length ? `. Problems: ${notes.join('; ')}` : ''}.`;
+}
+
 async function start() {
   if (process.env.NODE_ENV === 'production') {
     const missing = ['JWT_SECRET', 'ENCRYPTION_KEY'].filter((k) => !process.env[k]);
     if (missing.length) throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
   }
-  await sequelize.authenticate();
+  try {
+    await sequelize.authenticate();
+  } catch (err) {
+    console.error(`Database connection failed. ${describeDatabaseUrl(process.env.DATABASE_URL)}`);
+    throw err;
+  }
   await sequelize.sync();
   // sync() doesn't add new columns to existing tables; add columns introduced after the first release.
   const qi = sequelize.getQueryInterface();
