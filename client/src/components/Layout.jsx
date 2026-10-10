@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import { Avatar, Loading } from './ui';
 import { timeAgo } from '../utils/format';
+import { NOTIFICATIONS_CHANGED } from '../utils/events';
 import TopBar, { TextSize } from './portal/TopBar';
 import { Wordmark } from './portal/Brand';
 
@@ -55,13 +56,16 @@ function NotificationBell() {
   const [data, setData] = useState({ items: [], unread: 0 });
   const ref = useRef(null);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   const load = () => api.get('/notifications?limit=6').then((r) => setData(r.data)).catch(() => {});
   useEffect(() => {
-    load();
     const t = setInterval(load, 30000);
-    return () => clearInterval(t);
+    window.addEventListener(NOTIFICATIONS_CHANGED, load);
+    return () => { clearInterval(t); window.removeEventListener(NOTIFICATIONS_CHANGED, load); };
   }, []);
+  // Refresh on every page change: most actions that create or read notifications end in navigation.
+  useEffect(() => { load(); }, [pathname]);
   useEffect(() => {
     const close = (e) => ref.current && !ref.current.contains(e.target) && setOpen(false);
     document.addEventListener('mousedown', close);

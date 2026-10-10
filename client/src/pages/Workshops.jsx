@@ -146,7 +146,7 @@ export default function Workshops() {
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                   {isAdmin ? <>
-                    <Button size="sm" variant="secondary" icon={ClipboardCheck} onClick={() => setAttendance(w)}>Attendance</Button>
+                    {w.status !== 'cancelled' && <Button size="sm" variant="secondary" icon={ClipboardCheck} onClick={() => setAttendance(w)}>Attendance</Button>}
                     <Button size="sm" variant="ghost" icon={Pencil} onClick={() => setEditing(w)}>Edit</Button>
                     {w.status === 'upcoming' && <Button size="sm" variant="ghost" icon={Ban} onClick={() => window.confirm(`Cancel "${w.title}"? Registered users will be notified.`) && act(() => api.patch(`/workshops/${w.id}/cancel`), 'Event cancelled')}>Cancel</Button>}
                   </> : <>

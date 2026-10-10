@@ -102,9 +102,12 @@ router.delete('/:id', authorize('student', 'admin'), async (req, res) => {
 
 router.post('/:id/submit', authorize('student'), async (req, res) => {
   const startup = await loadStartup(req, req.params.id, { ownerOnly: true });
-  if (!['draft', 'rejected'].includes(startup.status)) throw new HttpError(400, `A ${startup.status} startup cannot be submitted again`);
+  if (!['draft', 'rejected'].includes(startup.status)) throw new HttpError(400, `This startup is already ${startup.status} and cannot be submitted again`);
   const missing = REQUIRED_FOR_SUBMISSION.filter((f) => !String(startup[f] ?? '').trim());
-  if (missing.length) throw new HttpError(400, `Please complete these fields before submitting: ${missing.join(', ')}`);
+  if (missing.length) {
+    const label = { startupName: 'Startup name', industry: 'Industry', description: 'Short description', problemStatement: 'Problem statement', solution: 'Solution', businessModel: 'Business model', techStack: 'Technology stack' };
+    throw new HttpError(400, `Please complete these fields before submitting: ${missing.map((f) => label[f] || f).join(', ')}`);
+  }
   await startup.update({ status: 'pending', submittedAt: new Date(), adminRemarks: null });
   await notify(await adminIds(), { message: `New startup submitted for verification: ${startup.startupName}`, type: 'startup', link: `/startups/${startup.id}` });
   res.json(startup);

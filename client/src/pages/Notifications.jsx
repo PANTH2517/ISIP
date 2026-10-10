@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Bell, CheckCheck, Megaphone, Send, Rocket, Target, IndianRupee, CalendarDays, GraduationCap, UserCheck, MessageSquare, Info, Briefcase } from 'lucide-react';
 import api, { errMsg } from '../api/client';
+import { NOTIFICATIONS_CHANGED } from '../utils/events';
 import { useAuth } from '../context/AuthContext';
 import { useApi } from '../hooks/useApi';
 import { Button, Card, EmptyState, ErrorBox, Field, Loading, PageHeader } from '../components/ui';
@@ -46,12 +47,15 @@ export default function Notifications() {
   const [unreadOnly, setUnreadOnly] = useState(false);
   const { data, error, reload } = useApi(`/notifications?limit=200${unreadOnly ? '&unread=true' : ''}`);
 
+  const changed = () => window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED));
   const open = async (n) => {
     if (!n.isRead) await api.patch(`/notifications/${n.id}/read`).catch(() => {});
+    changed();
     if (n.link) navigate(n.link); else reload();
   };
   const markAll = async () => {
     await api.patch('/notifications/read-all');
+    changed();
     reload();
   };
 
