@@ -1,0 +1,37 @@
+# Render Blueprint for the StartIn API. The React frontend is deployed separately on Vercel (root: client/),
+# and the database is PostgreSQL on Supabase (free tier).
+services:
+  - type: web
+    name: startin-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci --prefix server
+    startCommand: npm start --prefix server
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      # Supabase "Session pooler" connection string (IPv4; the direct db.*.supabase.co address is IPv6-only),
+      # e.g. postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres
+      - key: DATABASE_URL
+        sync: false
+      # The Vercel site address, e.g. https://startin.vercel.app (allowed by CORS, used in email links).
+      - key: CLIENT_URL
+        sync: false
+      # Your administrator account, created on first start (password: 10+ characters).
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      # Load the demo startups, mentors and investors on first start. All demo accounts use DEMO_PASSWORD.
+      - key: SEED_DEMO
+        value: "true"
+      - key: DEMO_PASSWORD
+        sync: false

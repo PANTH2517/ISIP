@@ -1,20 +1,21 @@
 import { Link } from 'react-router-dom';
 import { Rocket, Handshake, Landmark, CalendarDays, ChevronRight, Sparkles, Bell } from 'lucide-react';
-import { Badge, Card, EmptyState, PageHeader, ProgressBar, StatCard, StatusBadge } from '../../components/ui';
+import { Badge, Card, EmptyState, ProgressBar, StatCard, StatusBadge, ClearanceBadge } from '../../components/ui';
 import { fmtDate, fmtTime, inr, inrShort, timeAgo, firstName } from '../../utils/format';
+import WelcomeBanner from '../../components/portal/WelcomeBanner';
 
 export default function InvestorDashboard({ data, user }) {
   const { investor, recommended, offers, stats, meetings, availableStartups, notifications } = data;
   return (
     <>
-      <PageHeader
-        title={`Hello, ${firstName(user.name)} 👋`}
+      <WelcomeBanner
+        title={`Hello, ${firstName(user.name)}`}
         subtitle={investor?.firmName ? `${investor.firmName} · ${investor.investorType}` : 'Discover and back promising campus startups.'}
       />
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard icon={Rocket} label="Startups open to investment" value={availableStartups} sub="Approved & incubated" />
         <StatCard icon={Handshake} label="Offers made" value={stats.offers} sub={`${stats.pending} awaiting founder reply`} color="amber" />
-        <StatCard icon={Landmark} label="Deals closed" value={stats.deals} sub={`${inrShort(stats.committed)} committed`} color="green" />
+        <StatCard icon={Landmark} label="Deals closed" value={stats.deals} sub={`${inrShort(stats.committed)} cleared${stats.awaitingClearance ? ` · ${stats.awaitingClearance} under review` : ''}`} color="green" />
         <StatCard icon={CalendarDays} label="Upcoming meetings" value={meetings.length} sub={meetings[0] ? `Next: ${fmtDate(meetings[0].date)}` : 'None scheduled'} color="sky" />
       </div>
 
@@ -59,6 +60,7 @@ export default function InvestorDashboard({ data, user }) {
                         <p className="text-xs text-slate-500">{inr(o.amount)} · {o.instrument}{o.equity ? ` · ${o.equity}%` : ''} · {fmtDate(o.createdAt)}</p>
                       </div>
                       <StatusBadge status={o.status} />
+                      {o.status === 'accepted' && <ClearanceBadge clearance={o.clearance} />}
                     </Link>
                   </li>
                 ))}

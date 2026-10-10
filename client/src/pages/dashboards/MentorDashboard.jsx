@@ -3,9 +3,10 @@ import toast from 'react-hot-toast';
 import { Bar } from 'react-chartjs-2';
 import { Rocket, ClipboardCheck, CalendarClock, Trophy, Check, ChevronRight } from 'lucide-react';
 import api, { errMsg } from '../../api/client';
-import { Badge, Button, Card, EmptyState, PageHeader, ProgressBar, StatCard, StatusBadge } from '../../components/ui';
+import { Badge, Button, Card, EmptyState, ProgressBar, StatCard, StatusBadge } from '../../components/ui';
 import { fmtDate, fmtTime, timeAgo, firstName } from '../../utils/format';
 import PersonLink from '../../components/PersonLink';
+import WelcomeBanner from '../../components/portal/WelcomeBanner';
 
 export default function MentorDashboard({ data, reload, user }) {
   const { assignments, pendingReviews, meetingRequests, upcomingMeetings, completedMilestones } = data;
@@ -22,7 +23,7 @@ export default function MentorDashboard({ data, reload, user }) {
 
   return (
     <>
-      <PageHeader title={`Hello, ${firstName(user.name)} 👋`} subtitle="Your mentorship overview." />
+      <WelcomeBanner title={`Hello, ${firstName(user.name)}`} subtitle="Your mentorship overview." />
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard icon={Rocket} label="Assigned startups" value={assignments.length} sub={`${assignments.filter((a) => a.status === 'assigned').length} awaiting acceptance`} />
         <StatCard icon={ClipboardCheck} label="Pending reviews" value={pendingReviews.length} sub="Milestone updates" color="amber" />
@@ -48,7 +49,7 @@ export default function MentorDashboard({ data, reload, user }) {
                     </div>
                     {a.status === 'assigned'
                       ? <Button size="sm" icon={Check} onClick={() => accept(a.id)}>Accept</Button>
-                      : <Link to={`/startups/${a.startupId}`}><ChevronRight className="h-4 w-4 text-slate-400" /></Link>}
+                      : <Link to={`/startups/${a.startupId}`} aria-label="Open startup" className="rounded p-1 hover:bg-slate-100"><ChevronRight className="h-4 w-4 text-slate-400" /></Link>}
                   </li>
                 ))}
               </ul>
@@ -75,7 +76,7 @@ export default function MentorDashboard({ data, reload, user }) {
             <Card title="Progress report" subtitle="Milestone completion per startup">
               <div className="h-56">
                 <Bar
-                  data={{ labels: assignments.map((a) => a.startup.startupName), datasets: [{ label: 'Progress %', data: assignments.map((a) => a.startup.progress), backgroundColor: '#6366f1', borderRadius: 6, maxBarThickness: 48 }] }}
+                  data={{ labels: assignments.map((a) => a.startup.startupName), datasets: [{ label: 'Progress %', data: assignments.map((a) => a.startup.progress), backgroundColor: '#1d4b94', borderRadius: 6, maxBarThickness: 48 }] }}
                   options={{ maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { max: 100, beginAtZero: true } } }}
                 />
               </div>

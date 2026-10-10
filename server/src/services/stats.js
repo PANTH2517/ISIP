@@ -1,5 +1,5 @@
 /** Aggregations for Module 10 (Reports) and the admin dashboard. Computed in JS so they work on SQLite and PostgreSQL alike. */
-import { Startup, User, Role, Mentor, MentorAssignment, FundingRequest, Workshop, WorkshopRegistration, Feedback, Investor, InvestmentInterest } from '../models/index.js';
+import { Startup, User, Role, Mentor, MentorAssignment, Workshop, WorkshopRegistration, Feedback, Investor, InvestmentInterest } from '../models/index.js';
 import { ACTIVE_ASSIGNMENT } from './access.js';
 import { today } from '../utils/http.js';
 
@@ -19,18 +19,20 @@ function lastMonths(n) {
 }
 
 export async function summary() {
-  const [startups, users, funding, workshops, registrations, assignments, interests] = await Promise.all([
+  const [startups, users, workshops, registrations, assignments, interests] = await Promise.all([
     Startup.findAll({ attributes: ['id', 'status', 'industry', 'createdAt', 'progress'] }),
     User.findAll({ attributes: ['id', 'createdAt', 'status'], include: [{ model: Role, as: 'role', attributes: ['roleName'] }] }),
-    FundingRequest.findAll({ attributes: ['amount', 'approvedAmount', 'status', 'requestDate'] }),
     Workshop.findAll({ attributes: ['id', 'status', 'date', 'type'] }),
     WorkshopRegistration.findAll({ attributes: ['attendanceStatus'] }),
     MentorAssignment.findAll({ where: { status: ACTIVE_ASSIGNMENT }, attributes: ['mentorId'] }),
-    InvestmentInterest.findAll({ attributes: ['amount', 'status', 'startupId'] }),
+    InvestmentInterest.findAll({ attributes: ['amount', 'status', 'startupId', 'clearance', 'respondedAt', 'reviewedAt'] }),
   ]);
   const submitted = startups.filter((s) => s.status !== 'draft');
   const months = lastMonths(6);
-  const approvedFunding = funding.filter((f) => f.status === 'approved');
+  // Transactions = offers the founder accepted; the Incubation Cell clears, holds or cancels each one.
+  const transactions = interests.filter((i) => i.status === 'accepted');
+  const cleared = transactions.filter((t) => t.clearance === 'cleared');
+  const awaiting = transactions.filter((t) => ['under_review', 'on_hold'].includes(t.clearance));
   const roleCounts = countBy(users.map((u) => ({ role: u.role.roleName })), 'role');
 
   return {
@@ -47,28 +49,30 @@ export async function summary() {
     },
     startupsByStatus: countBy(startups, 'status'),
     industry: countBy(submitted, 'industry'),
-    funding: {
-      requestedTotal: sum(funding, 'amount'),
-      approvedTotal: sum(approvedFunding, 'approvedAmount'),
-      requests: funding.length,
-      byStatus: countBy(funding, 'status'),
+    transactions: {
+      total: transactions.length,
+      cleared: cleared.length,
+      clearedAmount: sum(cleared, 'amount'),
+      awaiting: awaiting.length,
+      awaitingAmount: sum(awaiting, 'amount'),
+      byClearance: countBy(transactions, 'clearance'),
     },
     investments: {
       offers: interests.length,
       pending: interests.filter((i) => i.status === 'pending').length,
-      deals: interests.filter((i) => i.status === 'accepted').length,
-      committed: sum(interests.filter((i) => i.status === 'accepted'), 'amount'),
+      deals: cleared.length,
+      committed: sum(cleared, 'amount'),
       byStatus: countBy(interests, 'status'),
     },
     pendingApprovals: {
       startups: startups.filter((s) => s.status === 'pending').length,
-      funding: funding.filter((f) => f.status === 'pending').length,
+      transactions: awaiting.length,
     },
     monthly: months.map((m) => ({
       month: m,
       registrations: users.filter((u) => monthKey(u.createdAt) === m).length,
       startups: startups.filter((s) => monthKey(s.createdAt) === m).length,
-      fundingRequested: sum(funding.filter((f) => monthKey(f.requestDate) === m), 'amount'),
+      financeCleared: sum(cleared.filter((t) => t.reviewedAt && monthKey(t.reviewedAt) === m), 'amount'),
     })),
     workshops: {
       total: workshops.length,
@@ -90,10 +94,19 @@ export async function reportRows(type) {
     };
   }
   if (type === 'funding') {
-    const rows = await FundingRequest.findAll({ include: [{ model: Startup, as: 'startup', attributes: ['startupName'] }], order: [['requestDate', 'DESC']] });
+    const rows = await InvestmentInterest.findAll({
+      where: { status: 'accepted' },
+      include: [
+        { model: Startup, as: 'startup', attributes: ['startupName'] },
+        { model: Investor, as: 'investor', attributes: ['firmName'], include: [{ model: User, as: 'user', attributes: ['name'] }] },
+      ],
+      order: [['respondedAt', 'DESC']],
+    });
+    const day = (d) => (d ? new Date(d).toISOString().slice(0, 10) : '');
     return {
-      columns: ['Startup', 'Purpose', 'Requested (INR)', 'Status', 'Approved (INR)', 'Requested On', 'Remarks'],
-      rows: rows.map((f) => [f.startup?.startupName, f.purpose, Number(f.amount), f.status, f.approvedAmount ? Number(f.approvedAmount) : '', new Date(f.requestDate).toISOString().slice(0, 10), f.adminRemarks || '']),
+      columns: ['Startup', 'Investor', 'Amount (INR)', 'Instrument', 'Accepted On', 'Clearance', 'Reviewed On', 'Remarks'],
+      rows: rows.map((t) => [t.startup?.startupName, t.investor?.firmName ? `${t.investor.user?.name} (${t.investor.firmName})` : t.investor?.user?.name,
+        Number(t.amount), t.instrument, day(t.respondedAt), (t.clearance || '').replace('_', ' '), day(t.reviewedAt), t.clearanceNote || '']),
     };
   }
   if (type === 'mentors') {
@@ -121,7 +134,7 @@ export async function reportRows(type) {
   }
   if (type === 'registrations') {
     const s = await summary();
-    return { columns: ['Month', 'New Users', 'New Startups', 'Funding Requested (INR)'], rows: s.monthly.map((m) => [m.month, m.registrations, m.startups, m.fundingRequested]) };
+    return { columns: ['Month', 'New Users', 'New Startups', 'Finance Cleared (INR)'], rows: s.monthly.map((m) => [m.month, m.registrations, m.startups, m.financeCleared]) };
   }
   if (type === 'investments') {
     const rows = await InvestmentInterest.findAll({
@@ -132,8 +145,8 @@ export async function reportRows(type) {
       order: [['createdAt', 'DESC']],
     });
     return {
-      columns: ['Startup', 'Startup Status', 'Investor', 'Firm', 'Amount (INR)', 'Equity %', 'Instrument', 'Offer Status', 'Offered On'],
-      rows: rows.map((i) => [i.startup?.startupName, i.startup?.status, i.investor?.user?.name, i.investor?.firmName || '', Number(i.amount), i.equity ?? '', i.instrument, i.status, i.createdAt.toISOString().slice(0, 10)]),
+      columns: ['Startup', 'Startup Status', 'Investor', 'Firm', 'Amount (INR)', 'Equity %', 'Instrument', 'Offer Status', 'Clearance', 'Offered On'],
+      rows: rows.map((i) => [i.startup?.startupName, i.startup?.status, i.investor?.user?.name, i.investor?.firmName || '', Number(i.amount), i.equity ?? '', i.instrument, i.status, (i.clearance || '').replace('_', ' '), i.createdAt.toISOString().slice(0, 10)]),
     };
   }
   if (type === 'workshops') {
@@ -148,7 +161,7 @@ export async function reportRows(type) {
 
 export const REPORT_TYPES = {
   startups: 'Startup Register',
-  funding: 'Funding Summary',
+  funding: 'Funding Transactions',
   mentors: 'Mentor Activity',
   industry: 'Industry-wise Startups',
   registrations: 'Monthly Registrations',

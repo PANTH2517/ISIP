@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { Startup, Mentor, MentorAssignment, Milestone, Investor, FundingRequest, InvestmentInterest } from '../models/index.js';
+import { Startup, Mentor, MentorAssignment, Milestone, Investor, InvestmentInterest } from '../models/index.js';
 import { HttpError } from '../utils/http.js';
 import { notify, adminIds, mentorUserIdsForStartup } from './notify.js';
 
@@ -62,26 +62,33 @@ export async function recalcProgress(startupId) {
   return progress;
 }
 
-/** Finance secured by a startup: approved incubation funding + accepted investor offers. */
+/**
+ * Finance of a startup, from investor deals only. A deal the founder accepted counts as secured
+ * once the Incubation Cell clears it; deals still under review or on hold are reported separately.
+ */
 export async function financeSummary(startupIds) {
   const ids = [].concat(startupIds);
-  const [funding, investments] = await Promise.all([
-    FundingRequest.findAll({ where: { startupId: ids, status: 'approved' }, attributes: ['startupId', 'approvedAmount'] }),
-    InvestmentInterest.findAll({ where: { startupId: ids, status: 'accepted' }, attributes: ['startupId', 'amount'] }),
-  ]);
+  const deals = await InvestmentInterest.findAll({ where: { startupId: ids, status: 'accepted' }, attributes: ['startupId', 'amount', 'clearance'] });
   const out = {};
   for (const id of ids) {
-    const fundingApproved = funding.filter((f) => f.startupId === id).reduce((s, f) => s + Number(f.approvedAmount || 0), 0);
-    const f = investments.filter((i) => i.startupId === id);
-    const investmentCommitted = f.reduce((s, i) => s + Number(i.amount), 0);
-    out[id] = { fundingApproved, investmentCommitted, investors: f.length, total: fundingApproved + investmentCommitted, financed: fundingApproved + investmentCommitted > 0 };
+    const mine = deals.filter((d) => d.startupId === id);
+    const cleared = mine.filter((d) => d.clearance === 'cleared');
+    const awaiting = mine.filter((d) => ['under_review', 'on_hold'].includes(d.clearance));
+    const total = cleared.reduce((s, d) => s + Number(d.amount), 0);
+    out[id] = {
+      total,
+      investors: cleared.length,
+      awaitingClearance: awaiting.reduce((s, d) => s + Number(d.amount), 0),
+      awaitingDeals: awaiting.length,
+      financed: total > 0,
+    };
   }
   return Array.isArray(startupIds) ? out : out[startupIds];
 }
 
 /**
  * Business rule: a startup is incubated only once it secures finance.
- * Called after a funding approval or an accepted investor offer; promotes approved → incubated.
+ * Called when the Incubation Cell clears an investor deal; promotes approved → incubated.
  * Returns true when the startup was incubated by this call.
  */
 export async function incubateIfFinanced(startupId, reason) {

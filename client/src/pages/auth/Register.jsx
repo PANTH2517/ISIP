@@ -1,13 +1,22 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { MailCheck, Rocket, UserCheck, Briefcase } from 'lucide-react';
 import api, { errMsg } from '../../api/client';
 import { Button, Field } from '../../components/ui';
 import AuthShell, { DevLink } from './AuthShell';
 import { INVESTOR_TYPES } from '../../utils/format';
 
+const ROLES = ['student', 'mentor', 'investor'];
+
 export default function Register() {
-  const [form, setForm] = useState({ role: 'student', name: '', email: '', phone: '', password: '', confirm: '', expertise: '', bio: '', firmName: '', investorType: 'Angel', focusIndustries: '' });
+  const [params] = useSearchParams();
+  const roleParam = ROLES.includes(params.get('role')) ? params.get('role') : 'student';
+  const [form, setForm] = useState({ role: roleParam, name: '', email: '', phone: '', password: '', confirm: '', expertise: '', bio: '', firmName: '', investorType: 'Angel', focusIndustries: '' });
+  const [lastRoleParam, setLastRoleParam] = useState(roleParam);
+  if (roleParam !== lastRoleParam) {
+    setLastRoleParam(roleParam);
+    setForm((f) => ({ ...f, role: roleParam }));
+  }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(null);
@@ -31,7 +40,7 @@ export default function Register() {
 
   if (done) {
     return (
-      <AuthShell title="Check your inbox" footer={<Link to="/login" className="font-semibold text-indigo-600 hover:underline">Back to login</Link>}>
+      <AuthShell title={done.verified ? 'Account created' : 'Check your inbox'} footer={<Link to="/login" className="font-semibold text-indigo-600 hover:underline">{done.verified ? 'Log in now' : 'Back to login'}</Link>}>
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-800">
           <MailCheck className="mb-2 h-6 w-6" />
           {done.message}

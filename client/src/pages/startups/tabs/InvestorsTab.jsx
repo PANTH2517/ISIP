@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { Check, X, Handshake, Landmark } from 'lucide-react';
 import api, { errMsg } from '../../../api/client';
 import { useApi } from '../../../hooks/useApi';
-import { Avatar, Badge, Button, Card, EmptyState, ErrorBox, Field, Loading, Modal, StatusBadge } from '../../../components/ui';
+import { Avatar, Badge, Button, Card, ClearanceBadge, EmptyState, ErrorBox, Field, Loading, Modal, StatusBadge } from '../../../components/ui';
 import InvestorMeetings from '../../../components/InvestorMeetings';
 import { fmtDate, inr, plural } from '../../../utils/format';
 import PersonLink from '../../../components/PersonLink';
@@ -15,7 +15,7 @@ function RespondModal({ offer, decision, onClose, onDone }) {
     setSaving(true);
     try {
       const { data } = await api.patch(`/investors/interests/${offer.id}/respond`, { decision, note });
-      toast.success(data.incubated ? '🚀 Offer accepted — your startup is now incubated!' : decision === 'accepted' ? 'Offer accepted' : 'Offer declined');
+      toast.success(decision === 'accepted' ? 'Offer accepted. The Incubation Cell will review the transaction.' : 'Offer declined');
       onDone(data);
     } catch (e) { toast.error(errMsg(e)); } finally { setSaving(false); }
   };
@@ -27,7 +27,7 @@ function RespondModal({ offer, decision, onClose, onDone }) {
         <p className="font-semibold">{inr(offer.amount)} · {offer.instrument}{offer.equity ? ` · ${offer.equity}% equity` : ''}</p>
         <p className="text-slate-600">from {offer.investor.user.name}{offer.investor.firmName ? ` (${offer.investor.firmName})` : ''}</p>
       </div>
-      {accept && <p className="mb-3 text-sm text-emerald-700">Accepting commits this finance to your startup. If your startup is approved, it will move into incubation automatically.</p>}
+      {accept && <p className="mb-3 text-sm text-emerald-700">The Incubation Cell will review this transaction. Once it is cleared it counts as finance, and an approved startup moves into incubation.</p>}
       <Field label="Note to the investor (optional)"><textarea className="input" rows={3} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
     </Modal>
   );
@@ -50,8 +50,9 @@ export default function InvestorsTab({ startup, canRespond, onChange }) {
           <p className={`font-semibold ${f.financed ? 'text-emerald-800' : 'text-amber-800'}`}>{f.financed ? `Finance secured: ${inr(f.total)}` : 'No finance secured yet'}</p>
           <p className={f.financed ? 'text-emerald-700' : 'text-amber-700'}>
             {f.financed
-              ? `${inr(f.fundingApproved)} incubation funding · ${inr(f.investmentCommitted)} from ${plural(f.investors, 'investor')}`
-              : 'A startup enters incubation once it secures finance: an approved funding request or an accepted investor offer.'}
+              ? `Cleared deals from ${plural(f.investors, 'investor')}.`
+              : 'A startup enters incubation once an investor deal is accepted by the founder and cleared by the Incubation Cell.'}
+            {f.awaitingDeals > 0 && ` ${inr(f.awaitingClearance)} in ${plural(f.awaitingDeals, 'deal')} awaiting clearance.`}
           </p>
         </div>
       </div>
@@ -68,10 +69,12 @@ export default function InvestorsTab({ startup, canRespond, onChange }) {
                     {o.investor.firmName && <span className="text-sm text-slate-500">· {o.investor.firmName}</span>}
                     <Badge color="purple">{o.investor.investorType}</Badge>
                     <StatusBadge status={o.status} />
+                    {o.status === 'accepted' && <ClearanceBadge clearance={o.clearance} />}
                   </div>
                   <p className="mt-1 text-lg font-bold text-slate-900">{inr(o.amount)} <span className="text-sm font-normal text-slate-500">· {o.instrument}{o.equity ? ` · ${o.equity}% equity` : ''}</span></p>
                   {o.message && <p className="mt-1 whitespace-pre-line text-sm text-slate-700">“{o.message}”</p>}
                   {o.founderNote && <p className="mt-1 text-xs text-slate-500"><b>Your reply:</b> {o.founderNote}</p>}
+                  {o.clearanceNote && <p className="mt-1 text-xs text-slate-500"><b>Incubation Cell:</b> {o.clearanceNote}</p>}
                   <p className="mt-1 text-xs text-slate-400">Offered {fmtDate(o.createdAt)}{o.respondedAt ? ` · responded ${fmtDate(o.respondedAt)}` : ''}</p>
                 </div>
                 {canRespond && o.status === 'pending' && (

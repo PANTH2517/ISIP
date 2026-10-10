@@ -13,7 +13,6 @@ import startupRoutes from './routes/startups.js';
 import documentRoutes from './routes/documents.js';
 import milestoneRoutes from './routes/milestones.js';
 import mentorRoutes from './routes/mentors.js';
-import fundingRoutes from './routes/funding.js';
 import meetingRoutes from './routes/meetings.js';
 import feedbackRoutes from './routes/feedback.js';
 import workshopRoutes from './routes/workshops.js';
@@ -23,23 +22,26 @@ import reportRoutes from './routes/reports.js';
 import dashboardRoutes from './routes/dashboard.js';
 import investorRoutes from './routes/investors.js';
 import peopleRoutes from './routes/people.js';
+import publicRoutes from './routes/public.js';
 
 const app = express();
 
 app.set('trust proxy', 1);
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-app.use(cors({ origin: (process.env.CLIENT_URL || 'http://localhost:5173').split(','), credentials: true, exposedHeaders: ['Content-Disposition'] }));
+// CLIENT_URL may list several sites (comma-separated); trailing slashes are ignored.
+const allowedOrigins = (process.env.CLIENT_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:5173').split(',').map((o) => o.trim().replace(/\/+$/, ''));
+app.use(cors({ origin: allowedOrigins, credentials: true, exposedHeaders: ['Content-Disposition'] }));
 app.use(express.json({ limit: '1mb' }));
 if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
 app.use(auditLogger);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
+app.use('/api/public', publicRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/startups', startupRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/milestones', milestoneRoutes);
 app.use('/api/mentors', mentorRoutes);
-app.use('/api/funding', fundingRoutes);
 app.use('/api/meetings', meetingRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/workshops', workshopRoutes);

@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Doughnut, Bar, Line } from 'react-chartjs-2';
 import { Rocket, UserCheck, Sprout, IndianRupee, ClipboardList, GraduationCap, Landmark } from 'lucide-react';
-import { Badge, Card, PageHeader, StatCard } from '../../components/ui';
+import { Badge, Card, ClearanceBadge, StatCard } from '../../components/ui';
 import { fmtDate, timeAgo, plural, inrShort } from '../../utils/format';
 import { PALETTE, STATUS_COLORS, monthLabel } from '../../utils/charts';
+import WelcomeBanner from '../../components/portal/WelcomeBanner';
 
 export function StatusDoughnut({ byStatus }) {
   const entries = Object.entries(byStatus);
@@ -31,8 +32,8 @@ export function MonthlyLine({ monthly }) {
       data={{
         labels: monthly.map((m) => monthLabel(m.month)),
         datasets: [
-          { label: 'New users', data: monthly.map((m) => m.registrations), borderColor: '#4f46e5', backgroundColor: 'rgba(79,70,229,.1)', fill: true, tension: 0.35 },
-          { label: 'New startups', data: monthly.map((m) => m.startups), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.08)', fill: true, tension: 0.35 },
+          { label: 'New users', data: monthly.map((m) => m.registrations), borderColor: '#1d4b94', backgroundColor: 'rgba(29,75,148,.1)', fill: true, tension: 0.35, cubicInterpolationMode: 'monotone' },
+          { label: 'New startups', data: monthly.map((m) => m.startups), borderColor: '#f26b1d', backgroundColor: 'rgba(242,107,29,.08)', fill: true, tension: 0.35, cubicInterpolationMode: 'monotone' },
         ],
       }}
       options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }}
@@ -41,18 +42,18 @@ export function MonthlyLine({ monthly }) {
 }
 
 export default function AdminDashboard({ data }) {
-  const { stats, pendingStartups, pendingFunding, recentActivity, awaitingFinance } = data;
-  const { totals, funding, workshops, pendingApprovals, investments } = stats;
+  const { stats, pendingStartups, transactionsToReview, recentActivity, awaitingFinance } = data;
+  const { totals, transactions, workshops, pendingApprovals } = stats;
 
   return (
     <>
-      <PageHeader title="Incubation overview" subtitle="Everything happening in your incubation cell at a glance." />
+      <WelcomeBanner title="Incubation overview" subtitle="Everything happening in the Incubation & Innovation Cell at a glance." />
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <StatCard icon={Rocket} label="Total startups" value={totals.startups} sub={`${plural(totals.drafts, 'draft')} in progress`} />
         <StatCard icon={Sprout} label="Active incubations" value={totals.activeIncubations} sub={`Avg. progress ${totals.averageProgress}%`} color="violet" />
         <StatCard icon={UserCheck} label="Mentors" value={totals.mentors} sub={`${totals.activeMentors} actively mentoring`} color="sky" />
-        <StatCard icon={IndianRupee} label="Finance secured" value={inrShort(funding.approvedTotal + investments.committed)} sub={`${inrShort(funding.approvedTotal)} funding · ${inrShort(investments.committed)} investors`} color="green" />
-        <StatCard icon={ClipboardList} label="Pending approvals" value={pendingApprovals.startups + pendingApprovals.funding} sub={`${plural(pendingApprovals.startups, 'startup')} · ${plural(pendingApprovals.funding, 'funding request')}`} color="amber" />
+        <StatCard icon={IndianRupee} label="Finance cleared" value={inrShort(transactions.clearedAmount)} sub={`${plural(transactions.cleared, 'investor deal')} · ${inrShort(transactions.awaitingAmount)} awaiting`} color="green" />
+        <StatCard icon={ClipboardList} label="Needs your action" value={pendingApprovals.startups + pendingApprovals.transactions} sub={`${plural(pendingApprovals.startups, 'startup')} · ${plural(pendingApprovals.transactions, 'transaction')}`} color="amber" />
         <StatCard icon={GraduationCap} label="Workshops" value={workshops.total} sub={`${workshops.upcoming} upcoming · ${workshops.attended} attended`} color="rose" />
       </div>
 
@@ -85,14 +86,20 @@ export default function AdminDashboard({ data }) {
             </ul>
           )}
         </Card>
-        <Card title="Funding requests to review" action={<Link to="/funding" className="text-sm font-medium text-indigo-600 hover:underline">All</Link>} bodyClassName="p-0">
-          {pendingFunding.length === 0 ? <p className="p-5 text-sm text-slate-500">No pending funding requests.</p> : (
+        <Card title="Transactions to review" action={<Link to="/funding" className="text-sm font-medium text-indigo-600 hover:underline">All</Link>} bodyClassName="p-0">
+          {transactionsToReview.length === 0 ? <p className="p-5 text-sm text-slate-500">No transactions waiting for review.</p> : (
             <ul className="divide-y divide-slate-100">
-              {pendingFunding.map((f) => (
-                <li key={f.id}>
+              {transactionsToReview.map((t) => (
+                <li key={t.id}>
                   <Link to="/funding" className="flex items-center justify-between gap-2 px-5 py-3 hover:bg-slate-50">
-                    <div className="min-w-0"><p className="truncate text-sm font-medium">{f.startup.startupName}</p><p className="line-clamp-2 text-xs text-slate-500">{f.purpose}</p></div>
-                    <span className="shrink-0 text-sm font-semibold text-slate-800">{inrShort(f.amount)}</span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{t.startup.startupName}</p>
+                      <p className="truncate text-xs text-slate-500">from {t.investor.user.name}{t.investor.firmName ? ` (${t.investor.firmName})` : ''}</p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-semibold text-slate-800">{inrShort(t.amount)}</p>
+                      <ClearanceBadge clearance={t.clearance} />
+                    </div>
                   </Link>
                 </li>
               ))}

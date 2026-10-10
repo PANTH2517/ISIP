@@ -1,9 +1,11 @@
 /**
  * Data model — mirrors the ISIP class diagram (Experiment 5):
  * User, Role, Startup, StartupMember, Mentor, MentorAssignment, Milestone, MilestoneUpdate,
- * FundingRequest, Meeting, MeetingRequest, Document, Workshop, WorkshopRegistration,
+ * Meeting, MeetingRequest, Document, Workshop, WorkshopRegistration,
  * Notification, Feedback — plus Report and AuditLog from the SRS database list / NFRs,
  * and the Investor module (Investor, InvestmentInterest, InvestorMeeting).
+ * Funding happens only between founders and investors (InvestmentInterest); the Incubation Cell
+ * reviews each accepted deal and can clear it, put it on hold or cancel it.
  */
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/db.js';
@@ -109,16 +111,6 @@ export const MilestoneUpdate = sequelize.define('MilestoneUpdate', {
   reviewedAt: DATE,
 });
 
-export const FundingRequest = sequelize.define('FundingRequest', {
-  purpose: { type: TEXT, allowNull: false },
-  amount: { type: DECIMAL(14, 2), allowNull: false },
-  approvedAmount: DECIMAL(14, 2),
-  status: oneOf('pending', 'approved', 'rejected', 'modification_requested'),
-  requestDate: { type: DATE, defaultValue: DataTypes.NOW },
-  adminRemarks: TEXT,
-  decidedAt: DATE,
-});
-
 export const MeetingRequest = sequelize.define('MeetingRequest', {
   requestedDate: { type: DATEONLY, allowNull: false },
   requestedTime: { type: STRING(5), allowNull: false },
@@ -202,6 +194,9 @@ export const Investor = sequelize.define('Investor', {
 });
 
 /** An investor's offer to a startup ("show investment interest"). Accepted = finance committed. */
+/** Admin review of an accepted deal: under_review → cleared | on_hold | cancelled (on_hold → cleared | cancelled). */
+export const CLEARANCE = ['under_review', 'on_hold', 'cleared', 'cancelled'];
+
 export const InvestmentInterest = sequelize.define('InvestmentInterest', {
   amount: { type: DECIMAL(14, 2), allowNull: false },
   equity: FLOAT, // percent of equity asked, if any
@@ -210,6 +205,10 @@ export const InvestmentInterest = sequelize.define('InvestmentInterest', {
   status: oneOf('pending', 'accepted', 'declined', 'withdrawn'),
   founderNote: TEXT,
   respondedAt: DATE,
+  // Incubation Cell review of an accepted deal; only a cleared deal counts as secured finance.
+  clearance: { type: STRING(20), allowNull: true, validate: { isIn: [CLEARANCE] } },
+  clearanceNote: TEXT,
+  reviewedAt: DATE,
 });
 
 export const MEETING_KINDS = ['pitch', 'intro', 'due_diligence', 'follow_up'];
@@ -275,11 +274,6 @@ MilestoneUpdate.belongsTo(User, { foreignKey: 'submittedById', as: 'submittedBy'
 Startup.hasMany(Document, { foreignKey: 'startupId', as: 'documents', ...cascade });
 Document.belongsTo(Startup, { foreignKey: 'startupId', as: 'startup' });
 Document.belongsTo(User, { foreignKey: 'uploadedById', as: 'uploadedBy' });
-
-Startup.hasMany(FundingRequest, { foreignKey: 'startupId', as: 'fundingRequests', ...cascade });
-FundingRequest.belongsTo(Startup, { foreignKey: 'startupId', as: 'startup' });
-FundingRequest.belongsTo(Document, { foreignKey: 'businessPlanId', as: 'businessPlan', onDelete: 'SET NULL' });
-FundingRequest.belongsTo(Document, { foreignKey: 'supportingDocumentId', as: 'supportingDocument', onDelete: 'SET NULL' });
 
 Startup.hasMany(MeetingRequest, { foreignKey: 'startupId', as: 'meetingRequests', ...cascade });
 MeetingRequest.belongsTo(Startup, { foreignKey: 'startupId', as: 'startup' });

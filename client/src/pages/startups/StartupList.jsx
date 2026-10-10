@@ -107,7 +107,7 @@ export default function StartupList() {
                   <td className="min-w-36">{['approved', 'incubated'].includes(s.status) ? <ProgressBar value={s.progress} /> : <span className="text-slate-400">—</span>}</td>
                   <td className="whitespace-nowrap">{s.finance?.financed ? <span className="font-medium text-emerald-700">{inrShort(s.finance.total)}</span> : s.status === 'approved' ? <Badge color="yellow">Awaiting finance</Badge> : <span className="text-slate-400">—</span>}</td>
                   <td className="whitespace-nowrap text-slate-600">{fmtDate(s.submittedAt)}</td>
-                  <td><Link to={`/startups/${s.id}`}><ChevronRight className="h-4 w-4 text-slate-400" /></Link></td>
+                  <td><Link to={`/startups/${s.id}`} aria-label={`Open ${s.startupName}`} className="inline-block rounded p-1 hover:bg-slate-100"><ChevronRight className="h-4 w-4 text-slate-400" /></Link></td>
                 </tr>
               ))}
             </tbody>
