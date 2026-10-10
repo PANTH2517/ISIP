@@ -53,9 +53,14 @@ describe('meeting hints', () => {
     expect(screen.getByText(/Check-in opens at 2:45/i)).toBeInTheDocument();
   });
 
-  it('shows "in progress" once someone has checked in', () => {
+  it('shows "in progress" once someone has checked in and the meeting has started', () => {
     render(<CheckInHint checkedInAt="2026-10-10T09:28:00Z" timing={timing(15, 2)} />);
     expect(screen.getByText(/meeting in progress/)).toBeInTheDocument();
+  });
+
+  it('shows the start time when someone checked in early', () => {
+    render(<CheckInHint checkedInAt="2026-10-10T09:20:00Z" timing={timing(14, 55)} />);
+    expect(screen.getByText(/Checked in · starts at 3:00/i)).toBeInTheDocument();
   });
 
   it('warns about expiry for requests due today only', () => {

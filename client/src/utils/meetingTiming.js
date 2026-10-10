@@ -17,6 +17,7 @@ export function meetingTiming(date, time, now = Date.now()) {
     beforeCheckIn: now < opens,
     isToday: new Date(start).toDateString() === new Date(now).toDateString(),
     opensAt: clock(opens),
+    startsAt: clock(start),
     deadlineAt: clock(deadline),
   };
 }

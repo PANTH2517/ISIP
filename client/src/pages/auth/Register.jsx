@@ -13,13 +13,16 @@ export default function Register() {
   const roleParam = ROLES.includes(params.get('role')) ? params.get('role') : 'student';
   const [form, setForm] = useState({ role: roleParam, name: '', email: '', phone: '', password: '', confirm: '', expertise: '', bio: '', firmName: '', investorType: 'Angel', focusIndustries: '' });
   const [lastRoleParam, setLastRoleParam] = useState(roleParam);
-  if (roleParam !== lastRoleParam) {
-    setLastRoleParam(roleParam);
-    setForm((f) => ({ ...f, role: roleParam }));
-  }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(null);
+  // A new ?role= link (e.g. footer "Join as a mentor") starts a fresh form, even after a completed sign-up.
+  if (roleParam !== lastRoleParam) {
+    setLastRoleParam(roleParam);
+    setForm((f) => ({ ...f, role: roleParam }));
+    setDone(null);
+    setError('');
+  }
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   const submit = async (e) => {
