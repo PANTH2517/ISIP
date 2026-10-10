@@ -63,7 +63,8 @@ function AttendanceModal({ workshop, onClose, onChange }) {
         <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">Attendance can be marked from the event date ({fmtDate(workshop.date)}).</p>
       )}
       {!data ? <Loading /> : data.length === 0 ? <EmptyState icon={Users} title="No registrations yet" /> : (
-        <table className="table">
+        <div className="-mx-5 overflow-x-auto px-5">
+        <table className="table min-w-[28rem]">
           <thead><tr><th>Participant</th><th>Role</th><th>Status</th><th className="text-right">Mark</th></tr></thead>
           <tbody>
             {data.map((r) => (
@@ -82,6 +83,7 @@ function AttendanceModal({ workshop, onClose, onChange }) {
             ))}
           </tbody>
         </table>
+        </div>
       )}
       <p className="mt-3 text-xs text-slate-500">Participants marked present can download their participation certificate.</p>
     </Modal>

@@ -179,6 +179,8 @@ export default function StartupDetail() {
             {isInvestor && <>
               <Button icon={Handshake} disabled={hasOpenOffer} title={hasOpenOffer ? 'You already have a pending offer' : ''} onClick={() => setInvestorAction('offer')}>Make an offer</Button>
               <Button variant="secondary" icon={CalendarPlus} onClick={() => setInvestorAction('meeting')}>Request meeting</Button>
+              {/* Visible reason (a tooltip alone can't be seen on touch screens). */}
+              {hasOpenOffer && <p className="basis-full text-xs text-slate-500">You already have a pending offer for this startup. <Link to="/investor/deals" className="font-medium text-indigo-700 underline">See My offers</Link></p>}
             </>}
             {isAdmin && active && <Button variant="soft" icon={UserPlus} onClick={() => setAssignOpen(true)}>Assign mentor</Button>}
             {((isOwner && ['draft', 'pending', 'rejected'].includes(s.status)) || isAdmin) && <Button variant="ghost" icon={Trash2} onClick={remove} aria-label="Delete startup" />}

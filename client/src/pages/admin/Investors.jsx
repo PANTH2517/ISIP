@@ -16,7 +16,7 @@ export default function Investors() {
 
   return (
     <>
-      <PageHeader title="Investors" subtitle="Investor network, offers made to startups and closed deals." actions={<Link to="/admin/users"><Button variant="secondary" icon={UserPlus}>Add investor account</Button></Link>} />
+      <PageHeader title="Investors" subtitle="Investor network, offers made to startups and closed deals." actions={<Link to="/admin/users?add=investor"><Button variant="secondary" icon={UserPlus}>Add investor account</Button></Link>} />
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard icon={Briefcase} label="Investors" value={investors.data.length} sub={`${investors.data.filter((i) => i.deals > 0).length} with closed deals`} />
         <StatCard icon={Handshake} label="Offers" value={offers.data.length} sub={`${offers.data.filter((o) => o.status === 'pending').length} awaiting founder reply`} color="amber" />

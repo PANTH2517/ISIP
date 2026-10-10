@@ -49,7 +49,7 @@ export default function Mentors() {
 
   return (
     <>
-      <PageHeader title="Mentor management" subtitle="Assign mentors to verified startups and balance their workload." actions={<Link to="/admin/users"><Button variant="secondary" icon={UserPlus}>Add mentor account</Button></Link>} />
+      <PageHeader title="Mentor management" subtitle="Assign mentors to verified startups and balance their workload." actions={<Link to="/admin/users?add=mentor"><Button variant="secondary" icon={UserPlus}>Add mentor account</Button></Link>} />
 
       {unmentored.length > 0 && (
         <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useSearchParams } from 'react-router-dom';
 import { Plus, Search, UserX, UserCheck } from 'lucide-react';
 import api, { errMsg } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
@@ -10,8 +11,8 @@ import PersonLink from '../../components/PersonLink';
 
 const ROLES = { student: 'Student', mentor: 'Mentor', investor: 'Investor', admin: 'Admin' };
 
-function CreateUser({ onClose, onDone }) {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', role: 'mentor', password: '', expertise: '' });
+function CreateUser({ role = 'mentor', onClose, onDone }) {
+  const [form, setForm] = useState({ name: '', email: '', phone: '', role, password: '', expertise: '' });
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
   const save = async (e) => {
@@ -46,7 +47,11 @@ export default function Users() {
   const [role, setRole] = useState('');
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
-  const [creating, setCreating] = useState(false);
+  // ?add=mentor / ?add=investor (from the Mentors / Investors pages) opens the form with that role.
+  const [params, setParams] = useSearchParams();
+  const addRole = ROLES[params.get('add')] ? params.get('add') : null;
+  const [creating, setCreating] = useState(Boolean(addRole));
+  const closeCreate = () => { setCreating(false); if (addRole) setParams({}, { replace: true }); };
   // Search as you type (after a short pause); Enter still applies it immediately.
   useEffect(() => {
     const t = setTimeout(() => setQuery(search.trim()), 350);
@@ -113,7 +118,7 @@ export default function Users() {
           </table>
         )}
       </Card>
-      {creating && <CreateUser onClose={() => setCreating(false)} onDone={() => { setCreating(false); reload(); }} />}
+      {creating && <CreateUser role={addRole || 'mentor'} onClose={closeCreate} onDone={() => { closeCreate(); reload(); }} />}
     </>
   );
 }
