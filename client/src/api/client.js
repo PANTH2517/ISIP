@@ -23,7 +23,11 @@ api.interceptors.response.use(
     const url = err.config?.url || '';
     if (err.response?.status === 401 && !url.startsWith('/auth/')) {
       localStorage.removeItem(TOKEN_KEY);
-      if (!window.location.pathname.startsWith('/login')) window.location.href = '/login?expired=1';
+      if (!window.location.pathname.startsWith('/login')) {
+        // Remember the page so logging in again returns there.
+        const next = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.href = `/login?expired=1&next=${next}`;
+      }
     }
     return Promise.reject(err);
   },

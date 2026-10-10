@@ -9,13 +9,14 @@ import Login from './Login';
 vi.mock('../../api/client', () => import('../../test/apiMock'));
 vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() } }));
 
-function renderLogin() {
+function renderLogin(entry = '/login') {
   render(
-    <MemoryRouter initialEntries={['/login']}>
+    <MemoryRouter initialEntries={[entry]}>
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<p>Dashboard page</p>} />
+          <Route path="/startups/:id" element={<p>Startup page</p>} />
         </Routes>
       </AuthProvider>
     </MemoryRouter>,
@@ -67,5 +68,22 @@ describe('Login page', () => {
     await userEvent.click(await screen.findByRole('button', { name: /Resend verification email/ }));
     await waitFor(() => expect(api.post).toHaveBeenLastCalledWith('/auth/resend-verification', { email: 'new@isip.edu' }));
     expect(await screen.findByRole('link', { name: /Verify my email/ })).toHaveAttribute('href', '/verify-email?token=abc');
+  });
+
+  it('returns to the page the user was on after their session expired', async () => {
+    api.post.mockResolvedValueOnce({ data: { token: 'jwt-9', user: { id: 5, name: 'Aarav Patel', role: 'student' } } });
+    const { email, password, submit } = renderLogin('/login?expired=1&next=%2Fstartups%2F1%3Ftab%3Dinvestors');
+    expect(screen.getByRole('alert')).toHaveTextContent(/session expired/i);
+    await userEvent.type(email, 'a@b.c'); await userEvent.type(password, 'Password1');
+    await submit();
+    expect(await screen.findByText('Startup page')).toBeInTheDocument();
+  });
+
+  it('never redirects to another site after login', async () => {
+    api.post.mockResolvedValueOnce({ data: { token: 'jwt-9', user: { id: 5, name: 'Aarav Patel', role: 'student' } } });
+    const { email, password, submit } = renderLogin('/login?next=%2F%2Fevil.example');
+    await userEvent.type(email, 'a@b.c'); await userEvent.type(password, 'Password1');
+    await submit();
+    expect(await screen.findByText('Dashboard page')).toBeInTheDocument();
   });
 });
