@@ -37,17 +37,27 @@ describe('Stars', () => {
   it('reports the clicked rating', async () => {
     const onChange = vi.fn();
     render(<Stars value={2} onChange={onChange} />);
-    await userEvent.click(screen.getByLabelText('4 star'));
+    await userEvent.click(screen.getByLabelText('4 stars'));
     expect(onChange).toHaveBeenCalledWith(4);
   });
 
-  it('is read-only without onChange', () => {
+  it('is a single read-only image without onChange', () => {
     render(<Stars value={3} />);
-    expect(screen.getByLabelText('1 star')).toBeDisabled();
+    expect(screen.getByRole('img', { name: '3 out of 5 stars' })).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 });
 
 describe('Button', () => {
+  it('does not submit a surrounding form unless type="submit" is given', async () => {
+    const onSubmit = vi.fn((e) => e.preventDefault());
+    render(<form onSubmit={onSubmit}><Button>Cancel</Button><Button type="submit">Save</Button></form>);
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(onSubmit).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
   it('is disabled while loading', async () => {
     const onClick = vi.fn();
     render(<Button loading onClick={onClick}>Save</Button>);

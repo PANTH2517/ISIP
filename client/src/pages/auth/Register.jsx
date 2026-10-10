@@ -62,7 +62,7 @@ export default function Register() {
   return (
     <AuthShell title="Create your account" subtitle="Join your college's incubation program." footer={<>Already registered? <Link to="/login" className="font-semibold text-indigo-600 hover:underline">Log in</Link></>}>
       <form onSubmit={submit} className="space-y-4">
-        {error && <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-700">{error}</div>}
+        {error && <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-700">{error}</div>}
         <div className="grid grid-cols-3 gap-3">
           {roleBtn('student', Rocket, 'Student', 'I have a startup idea')}
           {roleBtn('mentor', UserCheck, 'Mentor', 'I want to guide startups')}

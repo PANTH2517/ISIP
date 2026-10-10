@@ -13,10 +13,12 @@ const VARIANTS = {
   soft: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100',
 };
 
-export function Button({ variant = 'primary', size = 'md', loading, icon: Icon, className, children, disabled, ...props }) {
+// type defaults to "button" so Cancel/secondary buttons never submit a surrounding form; pass type="submit" explicitly.
+export function Button({ variant = 'primary', size = 'md', loading, icon: Icon, className, children, disabled, type = 'button', ...props }) {
   const sizes = { sm: 'px-2.5 py-1.5 text-xs gap-1.5', md: 'px-3.5 py-2 text-sm gap-2', lg: 'px-5 py-2.5 text-sm gap-2' };
   return (
     <button
+      type={type}
       className={cx('inline-flex items-center justify-center rounded-md font-semibold transition disabled:cursor-not-allowed disabled:opacity-60', VARIANTS[variant], sizes[size], className)}
       disabled={disabled || loading}
       {...props}
@@ -96,7 +98,7 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }) {
       <div className={cx('w-full overflow-hidden rounded-lg bg-white shadow-2xl', widths[size])} onMouseDown={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
         <div className="flex items-center justify-between border-b-4 border-saffron-500 bg-indigo-900 px-5 py-3.5">
           <h3 className="font-semibold text-white">{title}</h3>
-          <button onClick={onClose} className="rounded p-1 text-indigo-200 hover:bg-white/10 hover:text-white" aria-label="Close"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={onClose} className="rounded p-1 text-indigo-200 hover:bg-white/10 hover:text-white" aria-label="Close"><X className="h-5 w-5" /></button>
         </div>
         <div className="max-h-[70vh] overflow-y-auto px-5 py-4">{children}</div>
         {footer && <div className="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3">{footer}</div>}
@@ -174,7 +176,7 @@ export function Loading({ text = 'Loading…' }) {
 export function ErrorBox({ error, onRetry }) {
   if (!error) return null;
   return (
-    <div className="flex items-center justify-between rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+    <div role="alert" className="flex items-center justify-between rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
       {error}
       {onRetry && <Button size="sm" variant="secondary" onClick={onRetry}>Retry</Button>}
     </div>
@@ -212,10 +214,18 @@ export function Tabs({ tabs, active, onChange }) {
 }
 
 export function Stars({ value = 0, onChange, size = 'h-4 w-4' }) {
+  // Read-only ratings are a single labelled image, not five disabled buttons.
+  if (!onChange) {
+    return (
+      <div className="flex items-center gap-0.5" role="img" aria-label={`${Math.round(value)} out of 5 stars`}>
+        {[1, 2, 3, 4, 5].map((n) => <Star key={n} className={cx(size, n <= Math.round(value) ? 'fill-amber-400 text-amber-400' : 'text-slate-300')} />)}
+      </div>
+    );
+  }
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((n) => (
-        <button key={n} type="button" disabled={!onChange} onClick={() => onChange?.(n)} className={cx(onChange ? 'cursor-pointer' : 'cursor-default')} aria-label={`${n} star`}>
+        <button key={n} type="button" onClick={() => onChange(n)} className="cursor-pointer" aria-label={`${n} star${n > 1 ? 's' : ''}`}>
           <Star className={cx(size, n <= Math.round(value) ? 'fill-amber-400 text-amber-400' : 'text-slate-300')} />
         </button>
       ))}

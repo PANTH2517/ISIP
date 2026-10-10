@@ -31,7 +31,7 @@ export default function ResetPassword() {
   return (
     <AuthShell title="Set a new password" footer={<Link to="/login" className="font-semibold text-indigo-600 hover:underline">Back to login</Link>}>
       <form onSubmit={submit} className="space-y-4">
-        {error && <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-700">{error}</div>}
+        {error && <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-700">{error}</div>}
         <Field label="New password" hint="Min 8 characters, a letter and a number"><input className="input" type="password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></Field>
         <Field label="Confirm password"><input className="input" type="password" required value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} /></Field>
         <Button type="submit" size="lg" className="w-full" loading={loading}>Update password</Button>

@@ -57,7 +57,7 @@ export default function Login() {
     <AuthShell title="Log in to StartIn" subtitle="Manage your startup journey, mentorship and funding." footer={<>New here? <Link to="/register" className="font-semibold text-indigo-600 hover:underline">Create an account</Link></>}>
       <form onSubmit={submit} className="space-y-4">
         {error && (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-700">
+          <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-700">
             {error}
             {unverified && <button type="button" onClick={resend} className="ml-1 font-semibold underline">Resend verification email</button>}
           </div>
