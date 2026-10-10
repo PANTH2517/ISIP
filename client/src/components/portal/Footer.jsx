@@ -12,7 +12,7 @@ export default function Footer() {
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-10 sm:grid-cols-2 lg:grid-cols-4 lg:px-8">
         <div>
           <div className="flex items-center gap-3">
-            <Emblem className="h-12 w-12" onDark />
+            <Emblem className="h-16 w-16" onDark />
             <div>
               <p className="font-display text-lg font-bold text-white">{BRAND.name}</p>
               <p className="text-xs text-indigo-300">{BRAND.cell}</p>
