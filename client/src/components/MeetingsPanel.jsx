@@ -49,7 +49,7 @@ function RequestModal({ startups, fixedStartupId, onClose, onDone }) {
           <Field label="Date" required><input className="input" type="date" min={todayISO()} required value={form.requestedDate} onChange={set('requestedDate')} /></Field>
           <Field label="Time" required><input className="input" type="time" required value={form.requestedTime} onChange={set('requestedTime')} /></Field>
         </div>
-        <Field label="Location or meeting link" hint="Optional: your mentor can change it when confirming"><input className="input" placeholder="https://meet.google.com/… or Conference Room 2" value={form.location} onChange={set('location')} /></Field>
+        <Field label="Location or meeting link" hint="Optional: your mentor can change it when confirming"><input className="input" placeholder="https://meet.google.com/… or Incubation Cell, Room 2" value={form.location} onChange={set('location')} /></Field>
         <Field label="Agenda"><textarea className="input" rows={3} value={form.agenda} onChange={set('agenda')} placeholder="What would you like to discuss?" /></Field>
         <div className="flex justify-end gap-2"><Button type="button" variant="secondary" onClick={onClose}>Cancel</Button><Button type="submit" loading={saving}>Send request</Button></div>
       </form>

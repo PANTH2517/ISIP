@@ -15,7 +15,7 @@ function RespondModal({ offer, decision, onClose, onDone }) {
     setSaving(true);
     try {
       const { data } = await api.patch(`/investors/interests/${offer.id}/respond`, { decision, note });
-      toast.success(decision === 'accepted' ? 'Offer accepted. The StartIn team will review the transaction.' : 'Offer declined');
+      toast.success(decision === 'accepted' ? 'Offer accepted. The Incubation Cell will review the transaction.' : 'Offer declined');
       onDone(data);
     } catch (e) { toast.error(errMsg(e)); } finally { setSaving(false); }
   };
@@ -27,7 +27,7 @@ function RespondModal({ offer, decision, onClose, onDone }) {
         <p className="font-semibold">{inr(offer.amount)} · {offer.instrument}{offer.equity ? ` · ${offer.equity}% equity` : ''}</p>
         <p className="text-slate-600">from {offer.investor.user.name}{offer.investor.firmName ? ` (${offer.investor.firmName})` : ''}</p>
       </div>
-      {accept && <p className="mb-3 text-sm text-emerald-700">The StartIn team will review this transaction. Once it is cleared it counts as finance, and an approved startup moves into incubation.</p>}
+      {accept && <p className="mb-3 text-sm text-emerald-700">The Incubation Cell will review this transaction. Once it is cleared it counts as finance, and an approved startup moves into incubation.</p>}
       <Field label="Note to the investor (optional)"><textarea className="input" rows={3} value={note} onChange={(e) => setNote(e.target.value)} /></Field>
     </Modal>
   );
@@ -51,7 +51,7 @@ export default function InvestorsTab({ startup, canRespond, onChange }) {
           <p className={f.financed ? 'text-emerald-700' : 'text-amber-700'}>
             {f.financed
               ? `Cleared deals from ${plural(f.investors, 'investor')}.`
-              : 'A startup enters incubation once an investor deal is accepted by the founder and cleared by the StartIn team.'}
+              : 'A startup enters incubation once an investor deal is accepted by the founder and cleared by the Incubation Cell.'}
             {f.awaitingDeals > 0 && ` ${inr(f.awaitingClearance)} in ${plural(f.awaitingDeals, 'deal')} awaiting clearance.`}
           </p>
         </div>
@@ -74,7 +74,7 @@ export default function InvestorsTab({ startup, canRespond, onChange }) {
                   <p className="mt-1 text-lg font-bold text-slate-900">{inr(o.amount)} <span className="text-sm font-normal text-slate-500">· {o.instrument}{o.equity ? ` · ${o.equity}% equity` : ''}</span></p>
                   {o.message && <p className="mt-1 whitespace-pre-line text-sm text-slate-700">“{o.message}”</p>}
                   {o.founderNote && <p className="mt-1 text-xs text-slate-500"><b>Your reply:</b> {o.founderNote}</p>}
-                  {o.clearanceNote && <p className="mt-1 text-xs text-slate-500"><b>StartIn team:</b> {o.clearanceNote}</p>}
+                  {o.clearanceNote && <p className="mt-1 text-xs text-slate-500"><b>Incubation Cell:</b> {o.clearanceNote}</p>}
                   <p className="mt-1 text-xs text-slate-400">Offered {fmtDate(o.createdAt)}{o.respondedAt ? ` · responded ${fmtDate(o.respondedAt)}` : ''}</p>
                 </div>
                 {canRespond && o.status === 'pending' && (

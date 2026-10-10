@@ -30,7 +30,7 @@ On first start the server creates a local SQLite database (`server/data/isip.sql
 
 | Role | Email | Password |
 |---|---|---|
-| Program Manager (Admin) | `admin@isip.edu` | `Admin@123` |
+| Incubation Manager (Admin) | `admin@isip.edu` | `Admin@123` |
 | Mentor | `priya.mentor@isip.edu` (also `rahul.mentor@`, `anita.mentor@`) | `Password@123` |
 | Student Entrepreneur | `aarav.student@isip.edu` (also `riya.student@`, `kabir.student@`, `meera.student@`) | `Password@123` |
 | Investor | `vikram.investor@isip.edu` (also `neha.investor@`) | `Password@123` |
@@ -41,13 +41,17 @@ The login page has one-click buttons that fill these in during development.
 
 ---
 
-## Design
+## Portal design
 
-A modern product UI: Inter / Plus Jakarta Sans, an indigo and violet palette, a sticky top bar and a public
-home page with live statistics, features, the startup journey, a startup showcase, events and FAQs. Data for the
-home page comes from the unauthenticated `GET /api/public/overview` endpoint, which returns aggregates only
-(no emails, phones or drafts) and is cached for 60s. Set `VITE_SUPPORT_EMAIL` in `client/.env` to change the
-contact address.
+The frontend uses a civic, institutional **portal** style: navy and orange theme, masthead with the StartIn
+emblem, a navigation bar, breadcrumbs, text-size controls (A- / A / A+, remembered per browser) and an
+institutional footer. It is not tied to any country or government: no flags, national emblems or official names.
+
+- **Public home page** (`/`): live statistics, programmes, the six-step incubation journey, upcoming events and
+  updates, a showcase of approved/incubated startups and FAQs. Data comes from the unauthenticated
+  `GET /api/public/overview` endpoint, which returns aggregates only (no emails, phones or drafts) and is cached
+  for 60s.
+- **Branding:** set `VITE_INSTITUTE_NAME` and `VITE_HELPDESK_EMAIL` in `client/.env` (see `client/.env.example`).
 
 ---
 
@@ -110,7 +114,7 @@ Investor offer ──(founder accepts)──► Under review ──(admin clears
 | Data encryption | Phone numbers encrypted at rest with AES-256-GCM (`utils/crypto.js`) |
 | Audit logging | Every state-changing request is logged; viewable at **Admin → Audit Log** |
 | Backup support | `npm run backup` exports all tables to JSON |
-| Responsive & accessible UI | Tailwind responsive layout with a collapsible mobile sidebar; skip link, breadcrumbs, keyboard focus styles |
+| Responsive & accessible UI | Tailwind responsive layout with a collapsible mobile sidebar; text-size controls, skip link, breadcrumbs |
 | Scalable architecture | Stateless REST API, separate frontend and backend; PostgreSQL in production |
 
 ---

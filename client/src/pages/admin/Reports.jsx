@@ -55,7 +55,7 @@ export default function Reports() {
         <Card title="Finance cleared per month">
           <div className="h-64">
             <Bar
-              data={{ labels: s.monthly.map((m) => monthLabel(m.month)), datasets: [{ label: 'Cleared (₹)', data: s.monthly.map((m) => m.financeCleared), backgroundColor: '#059669', borderRadius: 6, maxBarThickness: 40 }] }}
+              data={{ labels: s.monthly.map((m) => monthLabel(m.month)), datasets: [{ label: 'Cleared (₹)', data: s.monthly.map((m) => m.financeCleared), backgroundColor: '#16a34a', borderRadius: 6, maxBarThickness: 40 }] }}
               options={{ maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: (v) => `₹${Number(v).toLocaleString('en-IN')}` } } } }}
             />
           </div>

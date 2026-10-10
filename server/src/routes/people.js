@@ -65,7 +65,7 @@ async function founderReport(user, isPrivate, canOpen) {
   const achievements = [];
   if (shown.length) achievements.push({ icon: 'rocket', title: `Founded ${shown.length} startup${shown.length > 1 ? 's' : ''}`, detail: shown.map((s) => s.startupName).join(', ') });
   if (incubated) achievements.push({ icon: 'sprout', title: 'Incubated founder', detail: `${incubated} startup${incubated > 1 ? 's' : ''} accepted into incubation` });
-  if (raised) achievements.push({ icon: 'landmark', title: `Raised ${inr(raised)}`, detail: 'Investor deals cleared by the StartIn team' });
+  if (raised) achievements.push({ icon: 'landmark', title: `Raised ${inr(raised)}`, detail: 'Investor deals cleared by the Incubation Cell' });
   if (milestonesCompleted) achievements.push({ icon: 'target', title: `${milestonesCompleted} milestone${milestonesCompleted > 1 ? 's' : ''} completed`, detail: 'Approved by mentors' });
   if (certificates.length) achievements.push({ icon: 'award', title: `${certificates.length} certificate${certificates.length > 1 ? 's' : ''} earned`, detail: certificates.map((c) => c.title).join(', ') });
 

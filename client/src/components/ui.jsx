@@ -4,8 +4,8 @@ import { Loader2, X, Star } from 'lucide-react';
 const cx = (...c) => c.filter(Boolean).join(' ');
 
 const VARIANTS = {
-  primary: 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm',
-  accent: 'bg-gradient-to-r from-indigo-600 to-accent-600 text-white hover:from-indigo-700 hover:to-accent-700 shadow-sm',
+  primary: 'bg-indigo-700 text-white hover:bg-indigo-800 shadow-sm',
+  accent: 'bg-saffron-500 text-white hover:bg-saffron-600 shadow-sm',
   secondary: 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 shadow-sm',
   danger: 'bg-rose-600 text-white hover:bg-rose-700 shadow-sm',
   success: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm',
@@ -17,7 +17,7 @@ export function Button({ variant = 'primary', size = 'md', loading, icon: Icon, 
   const sizes = { sm: 'px-2.5 py-1.5 text-xs gap-1.5', md: 'px-3.5 py-2 text-sm gap-2', lg: 'px-5 py-2.5 text-sm gap-2' };
   return (
     <button
-      className={cx('inline-flex items-center justify-center rounded-lg font-semibold transition disabled:cursor-not-allowed disabled:opacity-60', VARIANTS[variant], sizes[size], className)}
+      className={cx('inline-flex items-center justify-center rounded-md font-semibold transition disabled:cursor-not-allowed disabled:opacity-60', VARIANTS[variant], sizes[size], className)}
       disabled={disabled || loading}
       {...props}
     >
@@ -29,11 +29,11 @@ export function Button({ variant = 'primary', size = 'md', loading, icon: Icon, 
 
 export function Card({ title, subtitle, action, children, className, bodyClassName }) {
   return (
-    <section className={cx('overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm', className)}>
+    <section className={cx('overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm', className)}>
       {(title || action) && (
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-3.5">
-          <div>
-            {title && <h3 className="font-semibold text-slate-900">{title}</h3>}
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50/80 px-5 py-3">
+          <div className="border-l-4 border-saffron-500 pl-3">
+            {title && <h3 className="font-semibold text-indigo-950">{title}</h3>}
             {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
           </div>
           {action}
@@ -72,7 +72,7 @@ export function StatusBadge({ status }) {
   return <Badge color={color}>{label}</Badge>;
 }
 
-/** StartIn team review of an accepted investor deal. */
+/** Incubation Cell review of an accepted investor deal. */
 const CLEARANCE = {
   under_review: ['indigo', 'Under review'], on_hold: ['yellow', 'On hold'], cleared: ['green', 'Cleared'], cancelled: ['red', 'Cancelled'],
 };
@@ -94,8 +94,8 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 pt-[8vh] backdrop-blur-sm" onMouseDown={onClose}>
       <div className={cx('w-full overflow-hidden rounded-lg bg-white shadow-2xl', widths[size])} onMouseDown={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-          <h3 className="font-display text-lg font-semibold text-slate-900">{title}</h3>
+        <div className="flex items-center justify-between border-b-4 border-saffron-500 bg-indigo-900 px-5 py-3.5">
+          <h3 className="font-semibold text-white">{title}</h3>
           <button onClick={onClose} className="rounded p-1 text-indigo-200 hover:bg-white/10 hover:text-white" aria-label="Close"><X className="h-5 w-5" /></button>
         </div>
         <div className="max-h-[70vh] overflow-y-auto px-5 py-4">{children}</div>
@@ -117,7 +117,7 @@ export function Field({ label, hint, required, children, className }) {
 
 export function ProgressBar({ value = 0, className, showLabel = true }) {
   const v = Math.max(0, Math.min(100, Number(value) || 0));
-  const color = v >= 75 ? 'bg-emerald-500' : v >= 40 ? 'bg-indigo-500' : 'bg-amber-500';
+  const color = v >= 75 ? 'bg-[#16a34a]' : v >= 40 ? 'bg-indigo-700' : 'bg-saffron-500';
   return (
     <div className={cx('flex items-center gap-3', className)}>
       <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
@@ -130,16 +130,17 @@ export function ProgressBar({ value = 0, className, showLabel = true }) {
 
 export function StatCard({ icon: Icon, label, value, sub, color = 'indigo' }) {
   const colors = {
-    indigo: 'bg-indigo-50 text-indigo-600', green: 'bg-emerald-50 text-emerald-600', amber: 'bg-amber-50 text-amber-600',
-    rose: 'bg-rose-50 text-rose-600', sky: 'bg-sky-50 text-sky-600', violet: 'bg-violet-50 text-violet-600',
+    indigo: ['bg-indigo-50 text-indigo-800', 'border-l-indigo-700'], green: ['bg-emerald-50 text-emerald-700', 'border-l-[#16a34a]'],
+    amber: ['bg-saffron-50 text-saffron-600', 'border-l-saffron-500'], rose: ['bg-rose-50 text-rose-600', 'border-l-rose-500'],
+    sky: ['bg-sky-50 text-sky-700', 'border-l-sky-600'], violet: ['bg-violet-50 text-violet-700', 'border-l-violet-600'],
   };
-  const iconTone = colors[color] || colors.indigo;
+  const [iconTone, stripe] = colors[color] || colors.indigo;
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      {Icon && <div className={cx('shrink-0 rounded-xl p-2.5', iconTone)}><Icon className="h-5 w-5" /></div>}
+    <div className={cx('flex items-center gap-4 rounded-lg border border-l-4 border-slate-200 bg-white p-4 shadow-sm', stripe)}>
+      {Icon && <div className={cx('shrink-0 rounded-full p-2.5', iconTone)}><Icon className="h-5 w-5" /></div>}
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium leading-snug text-slate-500">{label}</p>
-        <p className="truncate font-display text-2xl font-bold text-slate-900" title={typeof value === 'string' ? value : undefined}>{value}</p>
+        <p className="text-xs font-semibold uppercase leading-snug tracking-wide text-slate-500">{label}</p>
+        <p className="truncate font-display text-2xl font-bold text-indigo-950" title={typeof value === 'string' ? value : undefined}>{value}</p>
         {sub && <p className="text-xs leading-snug text-slate-500">{sub}</p>}
       </div>
     </div>
@@ -151,10 +152,11 @@ export function PageHeader({ title, subtitle, actions }) {
     document.title = `${title} · StartIn`;
   }, [title]);
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4">
       <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
+        <h1 className="font-display text-2xl font-bold tracking-tight text-indigo-950">{title}</h1>
+        <div className="mt-2 h-1 w-14 rounded-full bg-saffron-500" aria-hidden="true" />
+        {subtitle && <p className="mt-2 text-sm text-slate-600">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>
@@ -192,17 +194,17 @@ export function EmptyState({ icon: Icon, title, text, action }) {
 
 export function Tabs({ tabs, active, onChange }) {
   return (
-    <div className="mb-5 flex gap-1 overflow-x-auto border-b border-slate-200">
+    <div className="mb-5 flex gap-1 overflow-x-auto border-b-2 border-slate-200">
       {tabs.map((t) => (
         <button
           key={t.id}
           onClick={() => onChange(t.id)}
-          className={cx('-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 px-3.5 py-2.5 text-sm font-medium transition',
-            active === t.id ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-800')}
+          className={cx('-mb-0.5 flex items-center gap-2 whitespace-nowrap border-b-[3px] px-3.5 py-2.5 text-sm font-semibold transition',
+            active === t.id ? 'border-saffron-500 bg-white text-indigo-900' : 'border-transparent text-slate-500 hover:text-indigo-900')}
         >
           {t.icon && <t.icon className="h-4 w-4" />}
           {t.label}
-          {t.count ? <span className="rounded-full bg-slate-100 px-1.5 text-xs font-semibold text-slate-600">{t.count}</span> : null}
+          {t.count ? <span className="rounded-full bg-saffron-500 px-1.5 text-xs font-semibold text-white">{t.count}</span> : null}
         </button>
       ))}
     </div>
@@ -223,7 +225,7 @@ export function Stars({ value = 0, onChange, size = 'h-4 w-4' }) {
 
 export function Avatar({ name, className }) {
   const initials = (name || '?').split(' ').filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
-  return <div className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-accent-500 text-sm font-semibold text-white', className)}>{initials}</div>;
+  return <div className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-900 text-sm font-semibold text-white ring-2 ring-saffron-200', className)}>{initials}</div>;
 }
 
 export function InfoRow({ label, children }) {

@@ -64,7 +64,7 @@ export async function recalcProgress(startupId) {
 
 /**
  * Finance of a startup, from investor deals only. A deal the founder accepted counts as secured
- * once the StartIn team clears it; deals still under review or on hold are reported separately.
+ * once the Incubation Cell clears it; deals still under review or on hold are reported separately.
  */
 export async function financeSummary(startupIds) {
   const ids = [].concat(startupIds);
@@ -88,7 +88,7 @@ export async function financeSummary(startupIds) {
 
 /**
  * Business rule: a startup is incubated only once it secures finance.
- * Called when the StartIn team clears an investor deal; promotes approved → incubated.
+ * Called when the Incubation Cell clears an investor deal; promotes approved → incubated.
  * Returns true when the startup was incubated by this call.
  */
 export async function incubateIfFinanced(startupId, reason) {

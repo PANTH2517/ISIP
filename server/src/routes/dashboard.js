@@ -62,7 +62,7 @@ async function studentDashboard(req) {
   for (const s of startups.filter((s) => s.status === 'approved')) {
     const f = finance[s.id];
     tasks.push(f?.awaitingDeals
-      ? { text: `"${s.startupName}" has ${f.awaitingDeals === 1 ? 'a deal' : `${f.awaitingDeals} deals`} awaiting StartIn team clearance`, link: '/funding' }
+      ? { text: `"${s.startupName}" has ${f.awaitingDeals === 1 ? 'a deal' : `${f.awaitingDeals} deals`} awaiting Incubation Cell clearance`, link: '/funding' }
       : { text: `Secure finance for "${s.startupName}" to enter incubation — pitch to investors or accept an offer`, link: '/investors' });
   }
   if (!startups.length) tasks.push({ text: 'Create your first startup profile', link: '/startups/new' });

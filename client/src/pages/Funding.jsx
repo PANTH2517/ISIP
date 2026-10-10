@@ -22,7 +22,7 @@ export default function Funding() {
         title={isAdmin ? 'Funding transactions' : 'Funding'}
         subtitle={isAdmin
           ? 'Deals agreed between founders and investors. Clear, hold or cancel each one.'
-          : 'Your startup is funded by investors. Offers you accept are checked by the StartIn team before they count as finance.'}
+          : 'Your startup is funded by investors. Offers you accept are checked by the Incubation Cell before they count as finance.'}
         actions={!isAdmin && <Link to="/investors"><Button icon={Briefcase}>Pitch to investors</Button></Link>}
       />
       {!isAdmin && (
@@ -30,7 +30,7 @@ export default function Funding() {
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-indigo-700" />
           <p>
             <b>How funding works:</b> pitch to an investor or wait for an offer, then accept it on your startup&apos;s <b>Investors</b> tab.
-            The StartIn team then clears the transaction (or puts it on hold if something is missing). Once cleared, it counts as finance and an approved startup is incubated.
+            The Incubation Cell then clears the transaction (or puts it on hold if something is missing). Once cleared, it counts as finance and an approved startup is incubated.
           </p>
         </div>
       )}

@@ -43,7 +43,7 @@ function ClearanceModal({ deal, action, onClose, onDone }) {
 }
 
 /**
- * Funding transactions: investor offers a founder has accepted. The StartIn team clears, holds or
+ * Funding transactions: investor offers a founder has accepted. The Incubation Cell clears, holds or
  * cancels each one; founders and investors see the status. `clearance` filters (comma-separated).
  */
 export default function TransactionsPanel({ startupId, clearance = '' }) {

@@ -32,8 +32,8 @@ export function MonthlyLine({ monthly }) {
       data={{
         labels: monthly.map((m) => monthLabel(m.month)),
         datasets: [
-          { label: 'New users', data: monthly.map((m) => m.registrations), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,.1)', fill: true, tension: 0.35, cubicInterpolationMode: 'monotone' },
-          { label: 'New startups', data: monthly.map((m) => m.startups), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,.08)', fill: true, tension: 0.35, cubicInterpolationMode: 'monotone' },
+          { label: 'New users', data: monthly.map((m) => m.registrations), borderColor: '#1d4b94', backgroundColor: 'rgba(29,75,148,.1)', fill: true, tension: 0.35, cubicInterpolationMode: 'monotone' },
+          { label: 'New startups', data: monthly.map((m) => m.startups), borderColor: '#f26b1d', backgroundColor: 'rgba(242,107,29,.08)', fill: true, tension: 0.35, cubicInterpolationMode: 'monotone' },
         ],
       }}
       options={{ maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }}
@@ -47,7 +47,7 @@ export default function AdminDashboard({ data }) {
 
   return (
     <>
-      <WelcomeBanner title="Incubation overview" subtitle="Everything happening across your program at a glance." />
+      <WelcomeBanner title="Incubation overview" subtitle="Everything happening in the Incubation & Innovation Cell at a glance." />
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <StatCard icon={Rocket} label="Total startups" value={totals.startups} sub={`${plural(totals.drafts, 'draft')} in progress`} />
         <StatCard icon={Sprout} label="Active incubations" value={totals.activeIncubations} sub={`Avg. progress ${totals.averageProgress}%`} color="violet" />

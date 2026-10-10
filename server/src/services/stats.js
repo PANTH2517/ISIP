@@ -29,7 +29,7 @@ export async function summary() {
   ]);
   const submitted = startups.filter((s) => s.status !== 'draft');
   const months = lastMonths(6);
-  // Transactions = offers the founder accepted; the StartIn team clears, holds or cancels each one.
+  // Transactions = offers the founder accepted; the Incubation Cell clears, holds or cancels each one.
   const transactions = interests.filter((i) => i.status === 'accepted');
   const cleared = transactions.filter((t) => t.clearance === 'cleared');
   const awaiting = transactions.filter((t) => ['under_review', 'on_hold'].includes(t.clearance));

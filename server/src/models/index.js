@@ -4,7 +4,7 @@
  * Meeting, MeetingRequest, Document, Workshop, WorkshopRegistration,
  * Notification, Feedback — plus Report and AuditLog from the SRS database list / NFRs,
  * and the Investor module (Investor, InvestmentInterest, InvestorMeeting).
- * Funding happens only between founders and investors (InvestmentInterest); the StartIn team
+ * Funding happens only between founders and investors (InvestmentInterest); the Incubation Cell
  * reviews each accepted deal and can clear it, put it on hold or cancel it.
  */
 import { DataTypes } from 'sequelize';
@@ -205,7 +205,7 @@ export const InvestmentInterest = sequelize.define('InvestmentInterest', {
   status: oneOf('pending', 'accepted', 'declined', 'withdrawn'),
   founderNote: TEXT,
   respondedAt: DATE,
-  // StartIn team review of an accepted deal; only a cleared deal counts as secured finance.
+  // Incubation Cell review of an accepted deal; only a cleared deal counts as secured finance.
   clearance: { type: STRING(20), allowNull: true, validate: { isIn: [CLEARANCE] } },
   clearanceNote: TEXT,
   reviewedAt: DATE,

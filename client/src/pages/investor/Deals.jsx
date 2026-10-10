@@ -30,10 +30,10 @@ export default function Deals() {
 
   return (
     <>
-      <PageHeader title="My offers" subtitle="Every offer you've made. Offers a founder accepts are cleared by the StartIn team before the deal is final." actions={<Link to="/startups"><Button icon={Handshake}>Find startups</Button></Link>} />
+      <PageHeader title="My offers" subtitle="Every offer you've made. Offers a founder accepts are cleared by the Incubation Cell before the deal is final." actions={<Link to="/startups"><Button icon={Handshake}>Find startups</Button></Link>} />
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard icon={Landmark} label="Committed" value={inrShort(cleared.reduce((s, o) => s + Number(o.amount), 0))} sub={`${plural(cleared.length, 'deal')} cleared`} color="green" />
-        <StatCard icon={Clock} label="In review" value={inReview.length} sub={inReview.length ? `${inrShort(inReview.reduce((s, o) => s + Number(o.amount), 0))} under review / on hold` : 'Nothing awaiting clearance'} color="sky" />
+        <StatCard icon={Clock} label="With Incubation Cell" value={inReview.length} sub={inReview.length ? `${inrShort(inReview.reduce((s, o) => s + Number(o.amount), 0))} under review / on hold` : 'Nothing awaiting clearance'} color="sky" />
         <StatCard icon={Clock} label="Awaiting reply" value={data.filter((o) => o.status === 'pending').length} color="amber" />
         <StatCard icon={XCircle} label="Declined / withdrawn" value={data.filter((o) => ['declined', 'withdrawn'].includes(o.status)).length} color="rose" />
       </div>
