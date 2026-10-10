@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast';
 import {
   ArrowLeft, Pencil, Send, Trash2, CheckCircle2, XCircle, Sprout, Info, Users, Target, FileText, CalendarDays,
-  MessageSquare, UserPlus, X, Briefcase, Handshake, CalendarPlus, Landmark,
+  MessageSquare, UserPlus, X, Briefcase, Handshake, CalendarPlus, Landmark, Check,
 } from 'lucide-react';
 import api, { errMsg } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
@@ -104,6 +104,15 @@ export default function StartupDetail() {
   const isAdmin = user.role === 'admin';
   const isInvestor = user.role === 'investor';
   const active = ['approved', 'incubated'].includes(s.status);
+  // The signed-in mentor's own assignment, if it still needs accepting.
+  const myPendingAssignment = user.role === 'mentor' ? s.assignments.find((a) => a.mentor.user.id === user.id && a.status === 'assigned') : null;
+  const acceptAssignment = async () => {
+    try {
+      await api.patch(`/mentors/assignments/${myPendingAssignment.id}/accept`);
+      toast.success(`You are now mentoring ${s.startupName}`);
+      reload();
+    } catch (e) { toast.error(errMsg(e)); }
+  };
   const finance = s.finance || {};
   const myLatestOffer = myOffers.data?.[0];
   const hasOpenOffer = myOffers.data?.some((o) => o.status === 'pending');
@@ -207,6 +216,12 @@ export default function StartupDetail() {
             {myLatestOffer.founderNote && <span className="text-indigo-700">· Founder: “{myLatestOffer.founderNote}”</span>}
           </div>
         )}
+        {myPendingAssignment && (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <span>You have been assigned to mentor <b>{s.startupName}</b>. Accept to confirm you&apos;ll guide this startup.</span>
+            <Button size="sm" variant="success" icon={Check} onClick={acceptAssignment}>Accept assignment</Button>
+          </div>
+        )}
         {s.status === 'draft' && isOwner && <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">This startup is a draft. Complete the idea details and submit it for verification.</div>}
       </div>
 
@@ -233,7 +248,7 @@ export default function StartupDetail() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium"><PersonLink id={a.mentor.user.id} name={a.mentor.user.name} /></p>
                         <p className="text-xs text-slate-500">{a.mentor.expertise}</p>
-                        {a.status === 'assigned' && <StatusBadge status="assigned" />}
+                        {a.status === 'assigned' && !isInvestor && <StatusBadge status="assigned" />}
                       </div>
                       {isAdmin && <button onClick={() => unassign(a)} className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600" aria-label="Remove mentor"><X className="h-4 w-4" /></button>}
                     </li>

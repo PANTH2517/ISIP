@@ -10,7 +10,9 @@ import PersonLink from '../../components/PersonLink';
 const STATUSES = ['pending', 'approved', 'incubated', 'rejected', 'draft'];
 
 function StartupCard({ s }) {
+  const { user } = useAuth();
   const mentors = s.assignments?.map((a) => a.mentor.user.name).join(', ');
+  const awaitingMe = user.role === 'mentor' && s.assignments?.some((a) => a.mentor.user.id === user.id && a.status === 'assigned');
   return (
     <Link to={`/startups/${s.id}`} className="group flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-indigo-300 hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
@@ -18,6 +20,7 @@ function StartupCard({ s }) {
         <StatusBadge status={s.status} />
       </div>
       <h3 className="mt-3 font-semibold text-slate-900 group-hover:text-indigo-700">{s.startupName}</h3>
+      {awaitingMe && <span className="mt-1 inline-flex w-fit rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">New assignment · open to accept</span>}
       <p className="text-xs font-medium text-indigo-600">{s.industry}</p>
       <p className="mt-2 line-clamp-2 flex-1 text-sm text-slate-600">{s.description || 'No description yet.'}</p>
       {['approved', 'incubated'].includes(s.status) && <ProgressBar value={s.progress} className="mt-4" />}
