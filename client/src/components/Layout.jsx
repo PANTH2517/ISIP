@@ -9,7 +9,6 @@ import api from '../api/client';
 import { Avatar, Loading } from './ui';
 import { timeAgo } from '../utils/format';
 import TopBar, { TextSize } from './portal/TopBar';
-import Footer from './portal/Footer';
 import { Wordmark } from './portal/Brand';
 
 const NAV = {
@@ -224,7 +223,6 @@ export default function Layout() {
           <div className="flex-1 px-4 py-6 lg:px-8">
             <div className="mx-auto max-w-7xl"><Suspense fallback={<Loading />}><Outlet /></Suspense></div>
           </div>
-          <Footer compact />
         </main>
       </div>
     </div>
