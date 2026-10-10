@@ -5,7 +5,7 @@
 import { Router } from 'express';
 import { Op } from 'sequelize';
 import { Startup, Workshop, Mentor, Investor, User, Role, InvestmentInterest } from '../models/index.js';
-import { today } from '../utils/http.js';
+import { today, localDay } from '../utils/http.js';
 
 const router = Router();
 
@@ -30,7 +30,7 @@ async function overview() {
 
   // Upcoming events are listed separately, so the notice board carries announcements only.
   const notices = [
-    ...recentlyIncubated.map((s) => ({ text: `${s.startupName} (${s.industry}) has been admitted to the incubation programme`, date: s.updatedAt.toISOString().slice(0, 10), isNew: true })),
+    ...recentlyIncubated.map((s) => ({ text: `${s.startupName} (${s.industry}) has been admitted to the incubation programme`, date: localDay(s.updatedAt), isNew: true })),
     { text: 'Applications for the pre-incubation programme are open throughout the year — submit your idea on the portal.', date: null, isNew: false },
   ];
 

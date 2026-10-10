@@ -30,10 +30,12 @@ export function parseAmount(value, label = 'Amount') {
   return Math.round(n * 100) / 100;
 }
 
-export const today = () => {
-  const d = new Date();
+/** YYYY-MM-DD of a date in the app's time zone (toISOString() would give the UTC day). */
+export const localDay = (value = new Date()) => {
+  const d = new Date(value);
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
+export const today = () => localDay();
 const nowTime = () => {
   const d = new Date();
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;

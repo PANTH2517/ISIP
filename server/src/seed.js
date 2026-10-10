@@ -10,6 +10,7 @@
  *   Investors vikram.investor@isip.edu Password@123   (also neha.investor@)
  */
 import 'dotenv/config';
+import './timezone.js';
 import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
@@ -21,11 +22,11 @@ import {
   Investor, InvestmentInterest, InvestorMeeting,
 } from './models/index.js';
 import { UPLOAD_DIR } from './middleware/upload.js';
-import { humanSlot } from './utils/http.js';
+import { humanSlot, localDay } from './utils/http.js';
 
 const DAY = 24 * 60 * 60 * 1000;
 const daysFromNow = (n) => new Date(Date.now() + n * DAY);
-const dateOnly = (n) => daysFromNow(n).toISOString().slice(0, 10);
+const dateOnly = (n) => localDay(daysFromNow(n));
 
 function writeSamplePdf(fileName, title, lines) {
   return new Promise((resolve) => {

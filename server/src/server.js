@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import './timezone.js';
 import { sequelize, Role, User, Meeting, MeetingRequest, InvestorMeeting, InvestmentInterest, USER_PROFILE_COLUMNS } from './models/index.js';
 import { sweepMeetings } from './services/meetingLifecycle.js';
 import { seedDatabase, bootstrapProduction, ensureAdminFromEnv } from './seed.js';

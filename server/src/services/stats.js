@@ -1,11 +1,11 @@
 /** Aggregations for Module 10 (Reports) and the admin dashboard. Computed in JS so they work on SQLite and PostgreSQL alike. */
 import { Startup, User, Role, Mentor, MentorAssignment, Workshop, WorkshopRegistration, Feedback, Investor, InvestmentInterest } from '../models/index.js';
 import { ACTIVE_ASSIGNMENT } from './access.js';
-import { today } from '../utils/http.js';
+import { today, localDay } from '../utils/http.js';
 
 const countBy = (rows, key) => rows.reduce((acc, r) => ((acc[r[key]] = (acc[r[key]] || 0) + 1), acc), {});
 const sum = (rows, key) => rows.reduce((s, r) => s + Number(r[key] || 0), 0);
-const monthKey = (d) => new Date(d).toISOString().slice(0, 7);
+const monthKey = (d) => localDay(d).slice(0, 7);
 
 function lastMonths(n) {
   const out = [];
@@ -90,7 +90,7 @@ export async function reportRows(type) {
     const rows = await Startup.findAll({ include: [{ model: User, as: 'founder', attributes: ['name', 'email'] }], order: [['createdAt', 'DESC']] });
     return {
       columns: ['Startup', 'Industry', 'Status', 'Founder', 'Founder Email', 'Progress %', 'Rating', 'Created'],
-      rows: rows.map((s) => [s.startupName, s.industry, s.status, s.founder?.name, s.founder?.email, s.progress, s.rating, s.createdAt.toISOString().slice(0, 10)]),
+      rows: rows.map((s) => [s.startupName, s.industry, s.status, s.founder?.name, s.founder?.email, s.progress, s.rating, localDay(s.createdAt)]),
     };
   }
   if (type === 'funding') {
@@ -102,7 +102,7 @@ export async function reportRows(type) {
       ],
       order: [['respondedAt', 'DESC']],
     });
-    const day = (d) => (d ? new Date(d).toISOString().slice(0, 10) : '');
+    const day = (d) => (d ? localDay(d) : '');
     return {
       columns: ['Startup', 'Investor', 'Amount (INR)', 'Instrument', 'Accepted On', 'Clearance', 'Reviewed On', 'Remarks'],
       rows: rows.map((t) => [t.startup?.startupName, t.investor?.firmName ? `${t.investor.user?.name} (${t.investor.firmName})` : t.investor?.user?.name,
@@ -146,7 +146,7 @@ export async function reportRows(type) {
     });
     return {
       columns: ['Startup', 'Startup Status', 'Investor', 'Firm', 'Amount (INR)', 'Equity %', 'Instrument', 'Offer Status', 'Clearance', 'Offered On'],
-      rows: rows.map((i) => [i.startup?.startupName, i.startup?.status, i.investor?.user?.name, i.investor?.firmName || '', Number(i.amount), i.equity ?? '', i.instrument, i.status, (i.clearance || '').replace('_', ' '), i.createdAt.toISOString().slice(0, 10)]),
+      rows: rows.map((i) => [i.startup?.startupName, i.startup?.status, i.investor?.user?.name, i.investor?.firmName || '', Number(i.amount), i.equity ?? '', i.instrument, i.status, (i.clearance || '').replace('_', ' '), localDay(i.createdAt)]),
     };
   }
   if (type === 'workshops') {
