@@ -169,15 +169,17 @@ These map one-to-one to the Experiment 5 class diagram, plus `Reports` and `Audi
 
 ---
 
-## Deployment (Neon + Render + Vercel)
+## Deployment (Supabase + Render + Vercel)
 
-The database is PostgreSQL on **Neon**, the API runs on **Render** ([`render.yaml`](render.yaml)) and the React
+The database is PostgreSQL on **Supabase**, the API runs on **Render** ([`render.yaml`](render.yaml)) and the React
 frontend on **Vercel** (`client/`, with `client/vercel.json` rewriting routes to `index.html`). All three have
 free plans.
 
-1. **Neon:** create a project and copy its connection string (`postgresql://…?sslmode=require`).
+1. **Supabase:** create a project (note the database password), then **Connect → Connection string → Session
+   pooler** and copy it (`postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`).
+   Use the pooler string: the *Direct connection* host is IPv6-only and Render can't reach it.
 2. **Render:** **New → Blueprint**, connect this repository and choose the branch. Fill in:
-   - `DATABASE_URL`: the Neon connection string.
+   - `DATABASE_URL`: the Supabase Session pooler connection string.
    - `ADMIN_EMAIL` / `ADMIN_PASSWORD`: your administrator login (password 10+ characters).
    - `DEMO_PASSWORD`: password for all demo accounts (`SEED_DEMO=true` loads demo data on first start). Leave it
      empty to start with an empty platform.

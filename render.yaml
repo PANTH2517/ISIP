@@ -1,5 +1,5 @@
 # Render Blueprint for the StartIn API. The React frontend is deployed separately on Vercel (root: client/),
-# and the database is PostgreSQL on Neon (free tier).
+# and the database is PostgreSQL on Supabase (free tier).
 services:
   - type: web
     name: startin-api
@@ -18,7 +18,8 @@ services:
         generateValue: true
       - key: ENCRYPTION_KEY
         generateValue: true
-      # Neon connection string, e.g. postgresql://user:pass@host/neondb?sslmode=require
+      # Supabase "Session pooler" connection string (IPv4; the direct db.*.supabase.co address is IPv6-only),
+      # e.g. postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres
       - key: DATABASE_URL
         sync: false
       # The Vercel site address, e.g. https://startin.vercel.app (allowed by CORS, used in email links).
