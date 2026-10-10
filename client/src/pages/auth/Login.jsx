@@ -6,6 +6,7 @@ import { firstName } from '../../utils/format';
 import { useAuth } from '../../context/AuthContext';
 import { Button, Field } from '../../components/ui';
 import AuthShell, { DevLink } from './AuthShell';
+import { postLoginPath } from '../../utils/redirect';
 
 // Demo accounts created by the server seed script (server/src/seed.js).
 const DEMO = [
@@ -34,10 +35,7 @@ export default function Login() {
     try {
       const user = await login(form.email, form.password);
       toast.success(`Welcome, ${firstName(user.name)}!`);
-      // Back to where the user was (only same-site paths, never an external or protocol-relative URL).
-      const from = location.state?.from;
-      const wanted = params.get('next') || (from ? `${from.pathname}${from.search || ''}` : '');
-      navigate(/^\/(?!\/)/.test(wanted) ? wanted : '/dashboard', { replace: true });
+      navigate(postLoginPath(location), { replace: true });
     } catch (err) {
       setError(errMsg(err));
       setUnverified(!!err.response?.data?.needsVerification);

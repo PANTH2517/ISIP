@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { postLoginPath } from './utils/redirect';
 import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import { Loading } from './components/ui';
@@ -29,18 +30,20 @@ const InvestorDirectory = lazy(() => import('./pages/InvestorDirectory'));
 const Landing = lazy(() => import('./pages/Landing'));
 
 function RequireAuth({ roles, children }) {
-  const { user, loading } = useAuth();
+  const { user, loading, expired, unreachable } = useAuth();
   const location = useLocation();
-  if (loading) return <Loading text="Loading StartIn…" />;
-  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
+  if (loading) return <Loading text={unreachable ? 'Connecting to StartIn… the server may be waking up, this can take a minute.' : 'Loading StartIn…'} />;
+  if (!user) return <Navigate to={expired ? '/login?expired=1' : '/login'} state={{ from: location }} replace />;
   if (roles && !roles.includes(user.role)) return <Navigate to="/dashboard" replace />;
   return children;
 }
 
 function GuestOnly({ children }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
   if (loading) return <Loading />;
-  return user ? <Navigate to="/dashboard" replace /> : children;
+  // Signing in on /login re-renders this guard first, so it must send the user to the same place Login would.
+  return user ? <Navigate to={postLoginPath(location)} replace /> : children;
 }
 
 export default function App() {

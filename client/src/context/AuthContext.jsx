@@ -6,17 +6,29 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(() => !!localStorage.getItem(TOKEN_KEY));
+  const [expired, setExpired] = useState(false); // a stored login was rejected (session expired)
+  const [unreachable, setUnreachable] = useState(false); // the API couldn't be reached; retrying
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async function attempt() {
     if (!localStorage.getItem(TOKEN_KEY)) return; // loading already starts false without a token
     try {
       const { data } = await api.get('/auth/me');
       setUser(data);
-    } catch {
-      localStorage.removeItem(TOKEN_KEY);
-      setUser(null);
-    } finally {
+      setUnreachable(false);
       setLoading(false);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        // Only a rejected token ends the session.
+        localStorage.removeItem(TOKEN_KEY);
+        setUser(null);
+        setExpired(true);
+        setUnreachable(false);
+        setLoading(false);
+      } else {
+        // Server asleep, restarting or offline: keep the login and try again shortly.
+        setUnreachable(true);
+        setTimeout(attempt, 4000);
+      }
     }
   }, []);
 
@@ -25,6 +37,7 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password });
     localStorage.setItem(TOKEN_KEY, data.token);
+    setExpired(false);
     setUser(data.user);
     return data.user;
   };
@@ -35,7 +48,7 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  return <AuthContext.Provider value={{ user, setUser, loading, login, logout, refresh }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, setUser, loading, expired, unreachable, login, logout, refresh }}>{children}</AuthContext.Provider>;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
