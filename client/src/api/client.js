@@ -2,7 +2,14 @@ import axios from 'axios';
 
 export const TOKEN_KEY = 'isip_token';
 
-const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' });
+/** API base URL. VITE_API_URL may be given with or without the trailing "/api" (or slash). */
+export function apiBase(url = import.meta.env.VITE_API_URL) {
+  const base = String(url || '').trim().replace(/\/+$/, '');
+  if (!base) return '/api';
+  return base.endsWith('/api') ? base : `${base}/api`;
+}
+
+const api = axios.create({ baseURL: apiBase() });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_KEY);
