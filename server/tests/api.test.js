@@ -564,3 +564,14 @@ test('the administrator account can be created from ADMIN_EMAIL / ADMIN_PASSWORD
   delete process.env.ADMIN_EMAIL;
   delete process.env.ADMIN_PASSWORD;
 });
+
+test('a mentor must explain why a milestone update needs more work', async () => {
+  const ms = (await api.get('/api/milestones?startupId=1').set(auth('student'))).body.milestones;
+  const next = ms.find((m) => m.status !== 'completed' && m.status !== 'submitted');
+  assert.equal((await api.post(`/api/milestones/${next.id}/updates`).set(auth('student')).send({ comments: 'Progress so far' })).status, 201);
+  const pending = (await api.get('/api/milestones?startupId=1').set(auth('mentor'))).body.milestones.find((m) => m.id === next.id).updates.find((u) => u.status === 'submitted');
+  const bare = await api.post(`/api/milestones/updates/${pending.id}/review`).set(auth('mentor')).send({ decision: 'rejected' });
+  assert.equal(bare.status, 400);
+  assert.match(bare.body.message, /what needs more work/);
+  assert.equal((await api.post(`/api/milestones/updates/${pending.id}/review`).set(auth('mentor')).send({ decision: 'rejected', mentorComments: 'Add customer quotes' })).status, 200);
+});

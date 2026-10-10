@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Plus, Rocket, Search, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -44,6 +44,18 @@ export default function StartupList() {
   const industry = params.get('industry') || '';
   const qs = new URLSearchParams(Object.entries({ status, industry, search: params.get('search') || '' }).filter(([, v]) => v)).toString();
   const { data, error, reload } = useApi(`/startups${qs ? `?${qs}` : ''}`);
+
+  // Search as you type (after a short pause); Enter still applies it immediately.
+  useEffect(() => {
+    const t = setTimeout(() => setParams((prev) => {
+      const v = search.trim();
+      if ((prev.get('search') || '') === v) return prev;
+      const next = new URLSearchParams(prev);
+      if (v) next.set('search', v); else next.delete('search');
+      return next;
+    }, { replace: true }), 350);
+    return () => clearTimeout(t);
+  }, [search, setParams]);
 
   const setFilter = (k, v) => {
     const next = new URLSearchParams(params);

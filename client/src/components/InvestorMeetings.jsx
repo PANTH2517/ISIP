@@ -97,7 +97,8 @@ export default function InvestorMeetings({ startupId, title = 'Investor meetings
                     {m.status === 'accepted' && t.checkInOpen && !m.checkedInAt && <Button size="sm" icon={LogIn} onClick={() => act(m, 'checkin')}>Check in</Button>}
                     {open && !t.started && !m.checkedInAt && <Button size="sm" variant="secondary" icon={CalendarClock} onClick={() => setRescheduling(m)}>Reschedule</Button>}
                     {m.status === 'accepted' && t.started && <Button size="sm" variant="soft" icon={CheckCheck} onClick={() => act(m, 'complete')}>Complete</Button>}
-                    {open && !m.checkedInAt && <Button size="sm" variant="ghost" icon={Ban} onClick={() => window.confirm('Cancel this meeting?') && act(m, 'cancel')}>Cancel</Button>}
+                    {/* When the request is waiting on you, Decline already covers it; Cancel is for confirmed meetings or your own requests. */}
+                    {open && !m.checkedInAt && !myTurn && <Button size="sm" variant="ghost" icon={Ban} onClick={() => window.confirm('Cancel this meeting?') && act(m, 'cancel')}>Cancel</Button>}
                   </div>
                 )}
               </li>

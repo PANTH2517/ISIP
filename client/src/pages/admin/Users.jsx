@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Plus, Search, UserX, UserCheck } from 'lucide-react';
 import api, { errMsg } from '../../api/client';
@@ -47,6 +47,11 @@ export default function Users() {
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   const [creating, setCreating] = useState(false);
+  // Search as you type (after a short pause); Enter still applies it immediately.
+  useEffect(() => {
+    const t = setTimeout(() => setQuery(search.trim()), 350);
+    return () => clearTimeout(t);
+  }, [search]);
   const qs = new URLSearchParams(Object.entries({ role, search: query }).filter(([, v]) => v)).toString();
   const { data, error, reload } = useApi(`/users${qs ? `?${qs}` : ''}`);
 

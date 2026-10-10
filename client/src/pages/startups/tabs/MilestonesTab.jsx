@@ -22,7 +22,7 @@ function ReviewBox({ update, onDone }) {
     <div className="mt-3 rounded-lg border border-indigo-200 bg-indigo-50/60 p-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Awaiting your review</p>
       <p className="mt-1 whitespace-pre-line text-sm text-slate-700">{update.comments}</p>
-      <textarea className="input mt-2" rows={2} placeholder="Comments for the founder (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
+      <textarea className="input mt-2" rows={2} placeholder="Comments for the founder (required if it needs more work)" value={note} onChange={(e) => setNote(e.target.value)} />
       <div className="mt-2 flex gap-2">
         <Button size="sm" variant="success" icon={Check} loading={busy === 'approved'} onClick={() => review('approved')}>Approve milestone</Button>
         <Button size="sm" variant="secondary" icon={X} loading={busy === 'rejected'} onClick={() => review('rejected')}>Needs more work</Button>

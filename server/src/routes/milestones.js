@@ -82,6 +82,7 @@ async function completeMilestone(milestone, startup, note) {
 router.post('/updates/:updateId/review', authorize('mentor', 'admin'), async (req, res) => {
   const { decision, mentorComments } = req.body;
   if (!['approved', 'rejected'].includes(decision)) throw new HttpError(400, 'Decision must be approved or rejected');
+  if (decision === 'rejected' && !String(mentorComments || '').trim()) throw new HttpError(400, 'Please tell the founder what needs more work');
   const update = await MilestoneUpdate.findByPk(req.params.updateId);
   if (!update) throw new HttpError(404, 'Update not found');
   if (update.status !== 'submitted') throw new HttpError(400, 'This update has already been reviewed');

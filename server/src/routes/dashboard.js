@@ -9,7 +9,7 @@ import { authenticate } from '../middleware/auth.js';
 import { mentorFor, investorFor, financeSummary, ACTIVE_ASSIGNMENT, INVESTABLE } from '../services/access.js';
 import { summary } from '../services/stats.js';
 import { sweepFirst } from '../services/meetingLifecycle.js';
-import { today } from '../utils/http.js';
+import { today, humanSlot } from '../utils/http.js';
 
 const router = Router();
 router.use(authenticate, sweepFirst);
@@ -57,7 +57,7 @@ async function studentDashboard(req) {
     tasks.push({ text: `Respond to ₹${Number(o.amount).toLocaleString('en-IN')} offer from ${o.investor.user.name} (${o.startup.startupName})`, link: `/startups/${o.startupId}?tab=investors` });
   }
   for (const m of investorMeetings.filter((m) => m.status === 'pending' && (m.awaiting || 'founder') === 'founder')) {
-    tasks.push({ text: `Confirm investor meeting with ${m.investor.user.name} on ${m.date}`, link: `/startups/${m.startupId}?tab=investors` });
+    tasks.push({ text: `Confirm investor meeting with ${m.investor.user.name} on ${humanSlot(m.date, m.time)}`, link: `/startups/${m.startupId}?tab=investors` });
   }
   for (const s of startups.filter((s) => s.status === 'approved')) {
     const f = finance[s.id];
