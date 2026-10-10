@@ -105,9 +105,10 @@ function NotificationBell() {
 
 /** Breadcrumb from the current path: Home › Section › Details. */
 function Breadcrumb({ items, pathname }) {
-  const all = [...items, ...ACCOUNT, { to: '/people', label: 'People' }];
+  // Profiles (/people/:id) have no list page, so they get a plain "Profile" crumb.
+  const all = [...items, ...ACCOUNT, { to: '/people', label: 'Profile', noLink: true }];
   const section = all.filter((i) => pathname === i.to || pathname.startsWith(`${i.to}/`)).sort((a, b) => b.to.length - a.to.length)[0];
-  const deeper = section && pathname !== section.to;
+  const deeper = section && pathname !== section.to && !section.noLink;
   return (
     <nav className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500" aria-label="Breadcrumb">
       <Link to="/dashboard" className="inline-flex items-center gap-1 hover:text-indigo-800 hover:underline"><Home className="h-3.5 w-3.5" />Home</Link>

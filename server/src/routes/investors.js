@@ -156,6 +156,8 @@ async function assertFree({ investorId, startupId, date, time, excludeId }) {
   }
 }
 
+/** "a pitch meeting", "an intro call" */
+const withArticle = (phrase) => `${/^[aeiou]/i.test(phrase) ? 'an' : 'a'} ${phrase}`;
 const KIND_LABEL = { pitch: 'pitch meeting', intro: 'intro call', due_diligence: 'due-diligence meeting', follow_up: 'follow-up meeting' };
 
 router.get('/meetings', sweepFirst, async (req, res) => {
@@ -180,7 +182,7 @@ router.post('/meetings', authorize('investor', 'student'), async (req, res) => {
     const startup = await loadStartup(req, req.body.startupId, { investorView: true });
     const meeting = await InvestorMeeting.create({ ...base, investorId: investor.id, startupId: startup.id, awaiting: 'founder' });
     await notify(startup.createdById, {
-      message: `${req.user.name}${investor.firmName ? ` (${investor.firmName})` : ''} requested an ${KIND_LABEL[kind]} on ${humanSlot(meeting.date, meeting.time)}. Please confirm.`,
+      message: `${req.user.name}${investor.firmName ? ` (${investor.firmName})` : ''} requested ${withArticle(KIND_LABEL[kind])} on ${humanSlot(meeting.date, meeting.time)}. Please confirm.`,
       type: 'investment', link: '/meetings',
     });
     return res.status(201).json(meeting);
@@ -205,7 +207,7 @@ router.post('/meetings', authorize('investor', 'student'), async (req, res) => {
   if (open) throw new HttpError(409, `You already have a pending meeting request with ${investor.user.name}`);
   const meeting = await InvestorMeeting.create({ ...base, investorId: investor.id, startupId: startup.id, awaiting: 'investor', askAmount, deckId });
   await notify(investor.userId, {
-    message: `🎤 ${startup.startupName} requested a ${KIND_LABEL[kind]} on ${humanSlot(meeting.date, meeting.time)}${askAmount ? `, raising ${inr(askAmount)}` : ''}. Please confirm.`,
+    message: `🎤 ${startup.startupName} requested ${withArticle(KIND_LABEL[kind])} on ${humanSlot(meeting.date, meeting.time)}${askAmount ? `, raising ${inr(askAmount)}` : ''}. Please confirm.`,
     type: 'investment', link: '/meetings',
   });
   res.status(201).json(meeting);
@@ -244,7 +246,7 @@ router.patch('/meetings/:id', authorize('student', 'investor', 'admin'), sweepFi
     if (!started) throw new HttpError(400, "A meeting can't be completed before it starts");
     await meeting.update({ status: 'completed', note: note ?? meeting.note });
   } else {
-    throw new HttpError(400, `Cannot ${action || 'update'} a ${meeting.status} meeting`);
+    throw new HttpError(400, `Cannot ${action || 'update'} ${withArticle(meeting.status)} meeting`);
   }
   const other = isFounder ? meeting.investor.userId : meeting.startup.createdById;
   const label = KIND_LABEL[meeting.kind] || 'investor meeting';

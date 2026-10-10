@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Button, Modal, ProgressBar, StatusBadge, Stars, StatCard } from './ui';
+import { Button, ErrorBox, Modal, ProgressBar, StatusBadge, Stars, StatCard } from './ui';
 
 describe('StatusBadge', () => {
   it.each([
@@ -90,5 +90,18 @@ describe('StatCard', () => {
     expect(screen.getByText('Finance secured')).toBeInTheDocument();
     expect(screen.getByText('₹12L')).toBeInTheDocument();
     expect(screen.getByText('₹2L funding · ₹10L investors')).toBeInTheDocument();
+  });
+});
+
+describe('ErrorBox', () => {
+  it('offers Retry for temporary errors and a way back when retrying cannot help', async () => {
+    const { MemoryRouter } = await import('react-router-dom');
+    const onRetry = vi.fn();
+    const { rerender } = render(<MemoryRouter><ErrorBox error="Network Error" onRetry={onRetry} /></MemoryRouter>);
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(onRetry).toHaveBeenCalled();
+    rerender(<MemoryRouter><ErrorBox error="Startup not found" onRetry={onRetry} /></MemoryRouter>);
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to dashboard' })).toHaveAttribute('href', '/dashboard');
   });
 });

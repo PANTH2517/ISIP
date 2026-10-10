@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Loader2, X, Star } from 'lucide-react';
 
 const cx = (...c) => c.filter(Boolean).join(' ');
@@ -173,12 +174,18 @@ export function Loading({ text = 'Loading…' }) {
   return <div className="flex items-center justify-center gap-3 py-16 text-sm text-slate-500"><Spinner />{text}</div>;
 }
 
+// Retrying can't fix "not found" or "no access", so those errors offer a way back instead.
+const PERMANENT_ERROR = /not found|do not have access|do not have permission/i;
+
 export function ErrorBox({ error, onRetry }) {
   if (!error) return null;
+  const permanent = PERMANENT_ERROR.test(error);
   return (
-    <div role="alert" className="flex items-center justify-between rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
       {error}
-      {onRetry && <Button size="sm" variant="secondary" onClick={onRetry}>Retry</Button>}
+      {permanent
+        ? <Link to="/dashboard" className="rounded-md border border-rose-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100">Back to dashboard</Link>
+        : onRetry && <Button size="sm" variant="secondary" onClick={onRetry}>Retry</Button>}
     </div>
   );
 }
