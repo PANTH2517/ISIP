@@ -1,12 +1,11 @@
-# Render Blueprint: one web service that runs the API and serves the built React app.
-# The database is PostgreSQL on Neon (free tier); paste its connection string as DATABASE_URL.
+# Render Blueprint for the StartIn API. The React frontend is deployed separately on Vercel (root: client/),
+# and the database is PostgreSQL on Neon (free tier).
 services:
   - type: web
-    name: startin
+    name: startin-api
     runtime: node
     plan: free
-    # NODE_ENV=production skips devDependencies, and the client build needs Vite, so include them there.
-    buildCommand: npm ci --prefix server && npm ci --include=dev --prefix client && npm run build --prefix client
+    buildCommand: npm ci --prefix server
     startCommand: npm start --prefix server
     healthCheckPath: /api/health
     autoDeploy: true
@@ -21,6 +20,9 @@ services:
         generateValue: true
       # Neon connection string, e.g. postgresql://user:pass@host/neondb?sslmode=require
       - key: DATABASE_URL
+        sync: false
+      # The Vercel site address, e.g. https://startin.vercel.app (allowed by CORS, used in email links).
+      - key: CLIENT_URL
         sync: false
       # Your administrator account, created on first start (password: 10+ characters).
       - key: ADMIN_EMAIL

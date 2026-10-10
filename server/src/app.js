@@ -28,7 +28,9 @@ const app = express();
 
 app.set('trust proxy', 1);
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-app.use(cors({ origin: (process.env.CLIENT_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:5173').split(','), credentials: true, exposedHeaders: ['Content-Disposition'] }));
+// CLIENT_URL may list several sites (comma-separated); trailing slashes are ignored.
+const allowedOrigins = (process.env.CLIENT_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:5173').split(',').map((o) => o.trim().replace(/\/+$/, ''));
+app.use(cors({ origin: allowedOrigins, credentials: true, exposedHeaders: ['Content-Disposition'] }));
 app.use(express.json({ limit: '1mb' }));
 if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
 app.use(auditLogger);

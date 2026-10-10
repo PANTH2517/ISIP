@@ -13,7 +13,8 @@ const router = Router();
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 100, standardHeaders: true, legacyHeaders: false });
 const PASSWORD_RULE = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
 const PASSWORD_MSG = 'Password must be at least 8 characters and include a letter and a number';
-const clientUrl = () => process.env.CLIENT_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:5173';
+// The (first) frontend address, for links in emails.
+const clientUrl = () => (process.env.CLIENT_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:5173').split(',')[0].trim().replace(/\/+$/, '');
 // In development there is no mail server, so links are also returned to the UI for convenience.
 const devExtra = (link) => (process.env.NODE_ENV === 'production' ? {} : { devLink: link });
 // A production deployment without SMTP can't deliver verification emails, so new accounts are verified at

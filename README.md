@@ -165,31 +165,33 @@ These map one-to-one to the Experiment 5 class diagram, plus `Reports` and `Audi
 
 ---
 
-## Deployment (Render + Neon)
+## Deployment (Neon + Render + Vercel)
 
-One Render web service runs the API and serves the built React app; the database is PostgreSQL on Neon.
-Everything is described in [`render.yaml`](render.yaml).
+The database is PostgreSQL on **Neon**, the API runs on **Render** ([`render.yaml`](render.yaml)) and the React
+frontend on **Vercel** (`client/`, with `client/vercel.json` rewriting routes to `index.html`). All three have
+free plans.
 
-1. **Database (Neon, free):** create a project at neon.tech and copy its connection string
-   (`postgresql://…?sslmode=require`).
-2. **App (Render, free):** in the Render dashboard choose **New → Blueprint**, connect this GitHub repository and
-   pick the `main` branch. Render reads `render.yaml` and asks for:
+1. **Neon:** create a project and copy its connection string (`postgresql://…?sslmode=require`).
+2. **Render:** **New → Blueprint**, connect this repository and choose the branch. Fill in:
    - `DATABASE_URL`: the Neon connection string.
    - `ADMIN_EMAIL` / `ADMIN_PASSWORD`: your administrator login (password 10+ characters).
    - `DEMO_PASSWORD`: password for all demo accounts (`SEED_DEMO=true` loads demo data on first start). Leave it
      empty to start with an empty platform.
+   - `CLIENT_URL`: leave a placeholder for now; set it to the Vercel address after step 3.
    `JWT_SECRET` and `ENCRYPTION_KEY` are generated automatically; the server refuses to start without them.
-3. Wait for the build, then open `https://<service-name>.onrender.com`. Tables are created on first start.
+   Check `https://<service>.onrender.com/api/health` once it is live.
+3. **Vercel:** **Add New → Project**, import this repository, set **Root Directory** to `client` (framework: Vite)
+   and add the environment variable `VITE_API_URL=https://<service>.onrender.com/api`. Deploy.
+4. Back in Render, set `CLIENT_URL` to the Vercel address (e.g. `https://startin.vercel.app`; several addresses can
+   be comma-separated) and save; the API restarts with CORS allowing your site.
 
 Notes:
 - **Email:** without `SMTP_*` settings, new accounts are verified automatically and password-reset emails are only
   written to the log (reset links are never shown in the browser). Add `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
   `SMTP_PASS` and `MAIL_FROM` to turn on real email.
-- **Uploads:** documents are stored on the service's disk, which is temporary on Render's free plan (cleared on
-  every deploy or restart). Use a paid plan with a persistent disk, or move storage to Cloudinary/S3, before
-  relying on uploads.
-- **Free plan sleep:** the service sleeps after 15 minutes without traffic; the first request then takes about a
-  minute.
+- **Uploads:** documents are stored on the API's disk, which is temporary on Render's free plan (cleared on every
+  deploy or restart). Use a persistent disk or move storage to Cloudinary/S3 before relying on uploads.
+- **Free plan sleep:** the API sleeps after 15 minutes without traffic; the first request then takes about a minute.
 
 ## Future scope
 
