@@ -25,7 +25,7 @@ services:
       # The Vercel site address, e.g. https://startin.vercel.app (allowed by CORS, used in email links).
       - key: CLIENT_URL
         sync: false
-      # Your administrator account, created on first start (password: 10+ characters).
+      # Your administrator account, created on start if missing (password: 8+ characters with a letter and a number).
       - key: ADMIN_EMAIL
         sync: false
       - key: ADMIN_PASSWORD

@@ -555,7 +555,7 @@ test('in production without SMTP, sign-ups are verified at once and reset links 
 test('the administrator account can be created from ADMIN_EMAIL / ADMIN_PASSWORD', async () => {
   const { ensureAdminFromEnv } = await import('../src/seed.js');
   Object.assign(process.env, { ADMIN_EMAIL: 'Owner@Test.edu', ADMIN_PASSWORD: 'short' });
-  assert.equal(await ensureAdminFromEnv(), false, 'too-short passwords are refused');
+  assert.equal(await ensureAdminFromEnv(), false, 'weak passwords are refused');
   process.env.ADMIN_PASSWORD = 'Owner-Pass-2026';
   assert.equal(await ensureAdminFromEnv(), true);
   assert.equal(await ensureAdminFromEnv(), false, 'not created twice');

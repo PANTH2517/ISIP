@@ -54,14 +54,15 @@ export async function bootstrapProduction() {
   for (const r of ROLES) await Role.findOrCreate({ where: { roleName: r.roleName }, defaults: r });
 }
 
-/** Creates the administrator named by ADMIN_EMAIL / ADMIN_PASSWORD if that account doesn't exist yet. */
+/** Creates the administrator named by ADMIN_EMAIL / ADMIN_PASSWORD if that account doesn't exist yet (checked on every start). */
 export async function ensureAdminFromEnv() {
   const email = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
   const password = process.env.ADMIN_PASSWORD || '';
   if (!email || !password) return false;
   if (await User.findOne({ where: { email } })) return false;
-  if (password.length < 10) {
-    console.warn('⚠ ADMIN_PASSWORD must be at least 10 characters; the administrator was not created.');
+  // Same rule as every other account: 8+ characters with a letter and a number.
+  if (!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(password)) {
+    console.warn('⚠ ADMIN_PASSWORD must be at least 8 characters and include a letter and a number; the administrator was not created.');
     return false;
   }
   const adminRole = await Role.findOne({ where: { roleName: 'admin' } });

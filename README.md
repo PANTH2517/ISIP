@@ -180,7 +180,7 @@ free plans.
    Use the pooler string: the *Direct connection* host is IPv6-only and Render can't reach it.
 2. **Render:** **New → Blueprint**, connect this repository and choose the branch. Fill in:
    - `DATABASE_URL`: the Supabase Session pooler connection string.
-   - `ADMIN_EMAIL` / `ADMIN_PASSWORD`: your administrator login (password 10+ characters).
+   - `ADMIN_EMAIL` / `ADMIN_PASSWORD`: your administrator login (8+ characters with a letter and a number).
    - `DEMO_PASSWORD`: password for all demo accounts (`SEED_DEMO=true` loads demo data on first start). Leave it
      empty to start with an empty platform.
    - `CLIENT_URL`: leave a placeholder for now; set it to the Vercel address after step 3.
