@@ -3,15 +3,15 @@ import {
 } from 'chart.js';
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
-ChartJS.defaults.font.family = '"Noto Sans", Inter, ui-sans-serif, system-ui, sans-serif';
+ChartJS.defaults.font.family = 'Inter, ui-sans-serif, system-ui, sans-serif';
 ChartJS.defaults.color = '#64748b';
 ChartJS.defaults.plugins.legend.labels.boxWidth = 12;
 
-export const PALETTE = ['#1d4b94', '#f26b1d', '#138808', '#157a6e', '#5b82c4', '#ffad70', '#9333ea', '#0891b2', '#ca8a04', '#64748b'];
+export const PALETTE = ['#6366f1', '#8b5cf6', '#10b981', '#0ea5e9', '#f59e0b', '#ec4899', '#14b8a6', '#f97316', '#64748b', '#a855f7'];
 
 export const STATUS_COLORS = {
-  draft: '#94a3b8', pending: '#f59e0b', approved: '#1d4b94', incubated: '#138808', rejected: '#dc2626',
-  modification_requested: '#f26b1d',
+  draft: '#94a3b8', pending: '#f59e0b', approved: '#6366f1', incubated: '#10b981', rejected: '#dc2626',
+  modification_requested: '#f97316',
 };
 
 export const monthLabel = (ym) => {

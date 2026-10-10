@@ -1,7 +1,7 @@
 /**
  * Investor module — funding happens only between founders and investors.
  * Investors browse approved startups (via /api/startups), make offers and request meetings; founders pitch from
- * the investor directory and accept/decline offers. An accepted offer is a transaction the Incubation Cell reviews:
+ * the investor directory and accept/decline offers. An accepted offer is a transaction the StartIn team reviews:
  * it can clear it, put it on hold or cancel it. Only a cleared deal counts as secured finance and moves an
  * approved startup into incubation.
  */
@@ -98,10 +98,10 @@ router.patch('/interests/:id/respond', authorize('student'), async (req, res) =>
   const startup = await loadStartup(req, interest.startupId, { ownerOnly: true });
   if (interest.status !== 'pending') throw new HttpError(400, `This offer is already ${interest.status}`);
   if (decision === 'accepted' && !INVESTABLE.includes(startup.status)) throw new HttpError(400, 'Only approved startups can accept investment');
-  // An accepted offer becomes a transaction awaiting the Incubation Cell's clearance.
+  // An accepted offer becomes a transaction awaiting the StartIn team's clearance.
   await interest.update({ status: decision, founderNote: note || null, respondedAt: new Date(), clearance: decision === 'accepted' ? 'under_review' : null });
 
-  const verb = decision === 'accepted' ? 'accepted 🎉 It is now with the Incubation Cell for clearance' : 'declined';
+  const verb = decision === 'accepted' ? 'accepted 🎉 It is now with the StartIn team for clearance' : 'declined';
   await notify(interest.investor.userId, {
     message: `${startup.startupName} ${verb} your offer of ${inr(interest.amount)}.${note ? ` Note: ${note}` : ''}`, type: 'investment', link: '/investor/deals',
   });
@@ -113,7 +113,7 @@ router.patch('/interests/:id/respond', authorize('student'), async (req, res) =>
   res.json({ interest });
 });
 
-// ---------- Incubation Cell review of accepted deals ----------
+// ---------- StartIn team review of accepted deals ----------
 const CLEARANCE_ACTIONS = { clear: 'cleared', hold: 'on_hold', cancel: 'cancelled' };
 
 router.patch('/interests/:id/clearance', authorize('admin'), async (req, res) => {

@@ -12,7 +12,7 @@ import { fmtDate, inr, inrShort, ticketRange } from '../utils/format';
 
 
 const ROLE = {
-  student: ['Student Entrepreneur', 'indigo'], mentor: ['Mentor', 'green'], investor: ['Investor', 'purple'], admin: ['Incubation Manager', 'blue'],
+  student: ['Student Entrepreneur', 'indigo'], mentor: ['Mentor', 'green'], investor: ['Investor', 'purple'], admin: ['Program Manager', 'blue'],
 };
 const ACHIEVEMENT_ICONS = { rocket: Rocket, sprout: Sprout, landmark: Landmark, target: Target, award: Award, users: Users, message: MessageSquare, calendar: CalendarDays, handshake: Handshake };
 

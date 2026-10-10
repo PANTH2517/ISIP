@@ -33,7 +33,7 @@ export default function StudentDashboard({ data, user }) {
       <WelcomeBanner
         title={`Hello, ${firstName(user.name)}`}
         subtitle="Here's how your startup journey is going."
-        actions={<Link to="/startups/new"><Button variant="accent" icon={Plus}>New startup</Button></Link>}
+        actions={<Link to="/startups/new"><Button variant="secondary" icon={Plus} className="border-0">New startup</Button></Link>}
       />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

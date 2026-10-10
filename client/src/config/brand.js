@@ -1,14 +1,9 @@
 /**
- * Portal identity. Set VITE_INSTITUTE_NAME / VITE_HELPDESK_EMAIL in client/.env to brand it for your institute.
- * The portal uses a civic design language but is not affiliated with any government body.
+ * Product identity. Set VITE_SUPPORT_EMAIL in client/.env to change the contact address.
  */
 export const BRAND = {
   name: 'StartIn',
   fullName: 'Intelligent Startup Incubation Platform',
-  fullNameHi: 'स्टार्टअप इनक्यूबेशन मंच',
-  cell: 'Incubation & Innovation Cell',
-  cellHi: 'इनक्यूबेशन एवं नवाचार प्रकोष्ठ',
-  institute: import.meta.env.VITE_INSTITUTE_NAME || 'Institute Innovation Council',
-  helpdesk: import.meta.env.VITE_HELPDESK_EMAIL || 'incubation@isip.edu',
-  hours: 'Mon–Fri, 9:30 am – 5:30 pm',
+  tagline: 'From idea to funded startup.',
+  support: import.meta.env.VITE_SUPPORT_EMAIL || import.meta.env.VITE_HELPDESK_EMAIL || 'hello@startin.app',
 };

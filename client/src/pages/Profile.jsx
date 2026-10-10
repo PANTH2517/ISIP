@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { Avatar, Badge, Button, Card, Field, PageHeader } from '../components/ui';
 import { fmtDate, INVESTOR_TYPES } from '../utils/format';
 
-const ROLE_LABEL = { student: 'Student Entrepreneur', mentor: 'Mentor', investor: 'Investor', admin: 'Incubation Manager' };
+const ROLE_LABEL = { student: 'Student Entrepreneur', mentor: 'Mentor', investor: 'Investor', admin: 'Program Manager' };
 
 export default function Profile() {
   const { user, setUser } = useAuth();

@@ -67,7 +67,7 @@ export function InvestorMeetingModal({ startup, onClose, onDone }) {
           <Field label="Date" required><input className="input" type="date" min={todayISO()} required value={form.date} onChange={set('date')} /></Field>
           <Field label="Time" required><input className="input" type="time" required value={form.time} onChange={set('time')} /></Field>
         </div>
-        <Field label="Location or meeting link" hint="e.g. https://meet.google.com/… or Incubation Cell, Room 2"><input className="input" value={form.location} onChange={set('location')} /></Field>
+        <Field label="Location or meeting link" hint="e.g. https://meet.google.com/… or Conference Room 2"><input className="input" value={form.location} onChange={set('location')} /></Field>
         <Field label="Agenda"><textarea className="input" rows={3} value={form.agenda} onChange={set('agenda')} placeholder="What would you like to discuss?" /></Field>
         <div className="flex justify-end gap-2"><Button type="button" variant="secondary" onClick={onClose}>Cancel</Button><Button type="submit" loading={saving}>Send request</Button></div>
       </form>
@@ -137,7 +137,7 @@ export function PitchRequestModal({ investor: preset, onClose, onDone }) {
               </select>
             </Field>
           </>}
-          <Field label="Location or meeting link" className="sm:col-span-2" hint="e.g. https://meet.google.com/… or Incubation Cell, Room 2"><input className="input" value={form.location} onChange={set('location')} /></Field>
+          <Field label="Location or meeting link" className="sm:col-span-2" hint="e.g. https://meet.google.com/… or Conference Room 2"><input className="input" value={form.location} onChange={set('location')} /></Field>
           <Field label="What you'd like to cover" className="sm:col-span-2"><textarea className="input" rows={3} value={form.agenda} onChange={set('agenda')} placeholder="e.g. 10-minute pitch, traction so far, use of funds, Q&A" /></Field>
           <div className="flex justify-end gap-2 sm:col-span-2"><Button type="button" variant="secondary" onClick={onClose}>Cancel</Button><Button type="submit" icon={Send} loading={saving}>Send request</Button></div>
         </form>

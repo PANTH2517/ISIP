@@ -50,7 +50,7 @@ export async function seedDatabase({ reset = false } = {}) {
   const [student, mentor, admin, investorRole] = await Role.bulkCreate([
     { roleName: 'student', description: 'Student Entrepreneur — submits and manages startups' },
     { roleName: 'mentor', description: 'Mentor — reviews and guides assigned startups' },
-    { roleName: 'admin', description: 'Incubation Manager — verifies startups, assigns mentors, reviews funding transactions' },
+    { roleName: 'admin', description: 'Program Manager — verifies startups, assigns mentors, reviews funding transactions' },
     { roleName: 'investor', description: 'Investor — browses approved startups and makes investment offers' },
   ]);
 
@@ -61,7 +61,7 @@ export async function seedDatabase({ reset = false } = {}) {
 
   const kavita = await User.create({
     name: 'Dr. Kavita Rao', email: 'admin@isip.edu', roleId: admin.id, password: await bcrypt.hash('Admin@123', 10), status: 'active', emailVerified: true, phone: '9800000001', createdAt: daysFromNow(-190),
-    headline: 'Head, Incubation & Innovation Cell', about: 'Runs the campus incubation programme: startup verification, mentor network, seed fund and investor connects. 15 years in technology entrepreneurship education.',
+    headline: 'Program Director, StartIn', about: 'Runs the campus incubation programme: startup verification, mentor network, seed fund and investor connects. 15 years in technology entrepreneurship education.',
     skills: 'Startup Evaluation, Programme Management, Ecosystem Building', linkedin: 'https://linkedin.com/in/kavita-rao-demo',
   });
 
@@ -224,11 +224,11 @@ export async function seedDatabase({ reset = false } = {}) {
 
   // Investor module — AgriSense closed an angel round; MediTrack and CampusEats have open offers / meeting requests.
   await InvestmentInterest.bulkCreate([
-    // Accepted and cleared by the Incubation Cell: this is AgriSense's secured finance.
+    // Accepted and cleared by the StartIn team: this is AgriSense's secured finance.
     { investorId: vikram.id, startupId: agri.id, amount: 1000000, equity: 8, instrument: 'Equity', status: 'accepted', message: 'Impressive field traction. Happy to lead your pre-seed.', founderNote: 'Excited to partner with Sahyadri Angels!', respondedAt: daysFromNow(-25), createdAt: daysFromNow(-35), clearance: 'cleared', clearanceNote: 'Term sheet and investor KYC verified.', reviewedAt: daysFromNow(-24) },
-    // Accepted by the founder, waiting for the Incubation Cell to clear it.
+    // Accepted by the founder, waiting for the StartIn team to clear it.
     { investorId: neha.id, startupId: eats.id, amount: 1500000, equity: 6, instrument: 'SAFE', status: 'accepted', message: 'Campus food is a great wedge. Happy to back the pilot.', founderNote: 'Thrilled to have Blue Lotus on board.', respondedAt: daysFromNow(-1), createdAt: daysFromNow(-6), clearance: 'under_review' },
-    // Put on hold by the Incubation Cell until paperwork arrives.
+    // Put on hold by the StartIn team until paperwork arrives.
     { investorId: neha.id, startupId: medi.id, amount: 1000000, instrument: 'Grant', status: 'accepted', message: 'A small grant to fund your clinic pilot.', founderNote: 'Thank you!', respondedAt: daysFromNow(-9), createdAt: daysFromNow(-14), clearance: 'on_hold', clearanceNote: 'Waiting for the signed grant agreement.', reviewedAt: daysFromNow(-7) },
     { investorId: vikram.id, startupId: medi.id, amount: 500000, equity: 10, instrument: 'Convertible Note', status: 'pending', message: 'We like the clinic-led distribution. Open to a convertible note with a 20% discount.', createdAt: daysFromNow(-3) },
     { investorId: neha.id, startupId: agri.id, amount: 2500000, equity: 15, instrument: 'Equity', status: 'declined', message: 'Interested in a larger round.', founderNote: 'Not raising at this valuation right now.', respondedAt: daysFromNow(-20), createdAt: daysFromNow(-28) },
@@ -236,7 +236,7 @@ export async function seedDatabase({ reset = false } = {}) {
   await InvestorMeeting.bulkCreate([
     { investorId: vikram.id, startupId: medi.id, date: dateOnly(6), time: '17:30', kind: 'due_diligence', agenda: 'Discuss term sheet and clinic pilots', status: 'accepted', location: 'https://meet.google.com/med-trak-dd1' },
     // Founder-initiated pitch, waiting for the investor to respond.
-    { investorId: neha.id, startupId: eats.id, date: dateOnly(4), time: '12:00', kind: 'pitch', awaiting: 'investor', askAmount: 1500000, agenda: 'Seed pitch: unit economics, campus expansion plan and use of funds', status: 'pending', location: 'Incubation Cell, Meeting Room 2' },
+    { investorId: neha.id, startupId: eats.id, date: dateOnly(4), time: '12:00', kind: 'pitch', awaiting: 'investor', askAmount: 1500000, agenda: 'Seed pitch: unit economics, campus expansion plan and use of funds', status: 'pending', location: 'Conference Room 2' },
     // Investor-initiated intro, waiting for the founder.
     { investorId: neha.id, startupId: agri.id, date: dateOnly(8), time: '11:00', kind: 'intro', awaiting: 'founder', agenda: 'Intro call: exploring a follow-on round', status: 'pending', location: 'https://zoom.us/j/9988776655' },
     { investorId: vikram.id, startupId: agri.id, date: dateOnly(-30), time: '16:00', kind: 'pitch', askAmount: 1000000, deckId: created['seed-agri-pitch-v2.pdf'].id, agenda: 'Pre-seed pitch and Q&A', status: 'completed' },

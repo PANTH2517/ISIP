@@ -76,7 +76,7 @@ export default function MentorDashboard({ data, reload, user }) {
             <Card title="Progress report" subtitle="Milestone completion per startup">
               <div className="h-56">
                 <Bar
-                  data={{ labels: assignments.map((a) => a.startup.startupName), datasets: [{ label: 'Progress %', data: assignments.map((a) => a.startup.progress), backgroundColor: '#1d4b94', borderRadius: 6, maxBarThickness: 48 }] }}
+                  data={{ labels: assignments.map((a) => a.startup.startupName), datasets: [{ label: 'Progress %', data: assignments.map((a) => a.startup.progress), backgroundColor: '#6366f1', borderRadius: 6, maxBarThickness: 48 }] }}
                   options={{ maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { max: 100, beginAtZero: true } } }}
                 />
               </div>

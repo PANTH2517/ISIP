@@ -1,5 +1,5 @@
 /**
- * Public, unauthenticated data for the portal home page: aggregate statistics, upcoming events,
+ * Public, unauthenticated data for the public home page: aggregate statistics, upcoming events,
  * the incubated-startup showcase and notices. Nothing personal is exposed — no emails, phones or drafts.
  */
 import { Router } from 'express';
@@ -31,7 +31,7 @@ async function overview() {
   // Upcoming events are listed separately, so the notice board carries announcements only.
   const notices = [
     ...recentlyIncubated.map((s) => ({ text: `${s.startupName} (${s.industry}) has been admitted to the incubation programme`, date: s.updatedAt.toISOString().slice(0, 10), isNew: true })),
-    { text: 'Applications for the pre-incubation programme are open throughout the year — submit your idea on the portal.', date: null, isNew: false },
+    { text: 'Applications for the pre-incubation programme are open throughout the year — submit your idea on StartIn.', date: null, isNew: false },
   ];
 
   return {
