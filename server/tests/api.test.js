@@ -534,3 +534,33 @@ test('public overview is open to visitors and exposes no personal data', async (
   const body = JSON.stringify(res.body);
   assert.doesNotMatch(body, /@|password|phone/i);
 });
+
+// ---------------- Production safety ----------------
+test('in production without SMTP, sign-ups are verified at once and reset links are never returned', async () => {
+  const previous = process.env.NODE_ENV;
+  process.env.NODE_ENV = 'production';
+  try {
+    const reg = await api.post('/api/auth/register').send({ name: 'Prod User', email: 'prod.user@test.edu', password: 'abc12345' });
+    assert.equal(reg.status, 201);
+    assert.equal(reg.body.verified, true);
+    assert.equal(reg.body.devLink, undefined);
+    assert.equal((await api.post('/api/auth/login').send({ email: 'prod.user@test.edu', password: 'abc12345' })).status, 200);
+    const reset = await api.post('/api/auth/forgot-password').send({ email: 'prod.user@test.edu' });
+    assert.equal(reset.body.devLink, undefined, 'reset link must not leak');
+  } finally {
+    process.env.NODE_ENV = previous;
+  }
+});
+
+test('the administrator account can be created from ADMIN_EMAIL / ADMIN_PASSWORD', async () => {
+  const { ensureAdminFromEnv } = await import('../src/seed.js');
+  Object.assign(process.env, { ADMIN_EMAIL: 'Owner@Test.edu', ADMIN_PASSWORD: 'short' });
+  assert.equal(await ensureAdminFromEnv(), false, 'too-short passwords are refused');
+  process.env.ADMIN_PASSWORD = 'Owner-Pass-2026';
+  assert.equal(await ensureAdminFromEnv(), true);
+  assert.equal(await ensureAdminFromEnv(), false, 'not created twice');
+  const login = await api.post('/api/auth/login').send({ email: 'owner@test.edu', password: 'Owner-Pass-2026' });
+  assert.equal(login.body.user.role, 'admin');
+  delete process.env.ADMIN_EMAIL;
+  delete process.env.ADMIN_PASSWORD;
+});

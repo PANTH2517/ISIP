@@ -1,12 +1,16 @@
 import 'dotenv/config';
 import { sequelize, Role, User, Meeting, MeetingRequest, InvestorMeeting, InvestmentInterest, USER_PROFILE_COLUMNS } from './models/index.js';
 import { sweepMeetings } from './services/meetingLifecycle.js';
-import { seedDatabase } from './seed.js';
+import { seedDatabase, bootstrapProduction, ensureAdminFromEnv } from './seed.js';
 import app from './app.js';
 
 const PORT = Number(process.env.PORT || 5000);
 
 async function start() {
+  if (process.env.NODE_ENV === 'production') {
+    const missing = ['JWT_SECRET', 'ENCRYPTION_KEY'].filter((k) => !process.env[k]);
+    if (missing.length) throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
   await sequelize.authenticate();
   await sequelize.sync();
   // sync() doesn't add new columns to existing tables; add columns introduced after the first release.
@@ -25,17 +29,27 @@ async function start() {
   }
   // Deals accepted before the clearance step existed were already counted as finance; keep them cleared.
   await InvestmentInterest.update({ clearance: 'cleared' }, { where: { status: 'accepted', clearance: null } });
+  const production = process.env.NODE_ENV === 'production';
   if (!(await Role.count())) {
-    console.log('Empty database detected — loading demo data...');
-    await seedDatabase();
+    // Demo data has well-known passwords, so production only loads it when asked to, with DEMO_PASSWORD set.
+    const demoInProduction = process.env.SEED_DEMO === 'true' && Boolean(process.env.DEMO_PASSWORD);
+    if (production && process.env.SEED_DEMO === 'true' && !demoInProduction) console.warn('⚠ SEED_DEMO is on but DEMO_PASSWORD is not set: skipping demo data.');
+    if (production && !demoInProduction) {
+      console.log('Empty database detected — creating roles.');
+      await bootstrapProduction();
+    } else {
+      console.log('Empty database detected — loading demo data...');
+      await seedDatabase();
+    }
+  }
+  await ensureAdminFromEnv();
+  if (production && !process.env.ADMIN_EMAIL) {
+    console.warn('⚠ ADMIN_EMAIL / ADMIN_PASSWORD are not set: no administrator account will be created.');
   }
   // Databases created before the investor module was added get the new role.
   await Role.findOrCreate({ where: { roleName: 'investor' }, defaults: { description: 'Investor — browses approved startups and makes investment offers' } });
   if (process.env.NODE_ENV === 'production' && !process.env.SMTP_HOST) {
-    console.warn('⚠ SMTP_HOST is not set: verification and password-reset emails will only be printed to this log.');
-  }
-  if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
-    console.warn('⚠ JWT_SECRET is not set: using the insecure development secret.');
+    console.warn('⚠ SMTP_HOST is not set: new accounts are verified automatically and password-reset emails are only printed to this log.');
   }
   // Expire unconfirmed requests / mark no-show meetings as missed — once now, then every minute.
   await sweepMeetings({ force: true });

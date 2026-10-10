@@ -1,0 +1,34 @@
+# Render Blueprint: one web service that runs the API and serves the built React app.
+# The database is PostgreSQL on Neon (free tier); paste its connection string as DATABASE_URL.
+services:
+  - type: web
+    name: startin
+    runtime: node
+    plan: free
+    # NODE_ENV=production skips devDependencies, and the client build needs Vite, so include them there.
+    buildCommand: npm ci --prefix server && npm ci --include=dev --prefix client && npm run build --prefix client
+    startCommand: npm start --prefix server
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      # Neon connection string, e.g. postgresql://user:pass@host/neondb?sslmode=require
+      - key: DATABASE_URL
+        sync: false
+      # Your administrator account, created on first start (password: 10+ characters).
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      # Load the demo startups, mentors and investors on first start. All demo accounts use DEMO_PASSWORD.
+      - key: SEED_DEMO
+        value: "true"
+      - key: DEMO_PASSWORD
+        sync: false

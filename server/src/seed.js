@@ -39,6 +39,40 @@ function writeSamplePdf(fileName, title, lines) {
   });
 }
 
+export const ROLES = [
+  { roleName: 'student', description: 'Student Entrepreneur — submits and manages startups' },
+  { roleName: 'mentor', description: 'Mentor — reviews and guides assigned startups' },
+  { roleName: 'admin', description: 'Program Manager — verifies startups, assigns mentors, reviews funding transactions' },
+  { roleName: 'investor', description: 'Investor — browses approved startups and makes investment offers' },
+];
+
+/**
+ * Production first boot: roles only, no demo accounts (their passwords are public in the README).
+ * The administrator comes from ADMIN_EMAIL / ADMIN_PASSWORD; see ensureAdminFromEnv().
+ */
+export async function bootstrapProduction() {
+  for (const r of ROLES) await Role.findOrCreate({ where: { roleName: r.roleName }, defaults: r });
+}
+
+/** Creates the administrator named by ADMIN_EMAIL / ADMIN_PASSWORD if that account doesn't exist yet. */
+export async function ensureAdminFromEnv() {
+  const email = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD || '';
+  if (!email || !password) return false;
+  if (await User.findOne({ where: { email } })) return false;
+  if (password.length < 10) {
+    console.warn('⚠ ADMIN_PASSWORD must be at least 10 characters; the administrator was not created.');
+    return false;
+  }
+  const adminRole = await Role.findOne({ where: { roleName: 'admin' } });
+  await User.create({
+    name: process.env.ADMIN_NAME || 'Administrator', email, password: await bcrypt.hash(password, 10),
+    roleId: adminRole.id, status: 'active', emailVerified: true,
+  });
+  console.log(`Administrator account created for ${email}.`);
+  return true;
+}
+
 export async function seedDatabase({ reset = false } = {}) {
   if (reset) {
     // Tables of removed models (admin-granted funding requests) would block dropping the tables they reference.
@@ -47,20 +81,17 @@ export async function seedDatabase({ reset = false } = {}) {
     for (const f of fs.readdirSync(UPLOAD_DIR)) if (f.startsWith('seed-')) fs.unlinkSync(path.join(UPLOAD_DIR, f));
   }
 
-  const [student, mentor, admin, investorRole] = await Role.bulkCreate([
-    { roleName: 'student', description: 'Student Entrepreneur — submits and manages startups' },
-    { roleName: 'mentor', description: 'Mentor — reviews and guides assigned startups' },
-    { roleName: 'admin', description: 'Program Manager — verifies startups, assigns mentors, reviews funding transactions' },
-    { roleName: 'investor', description: 'Investor — browses approved startups and makes investment offers' },
-  ]);
+  const [student, mentor, admin, investorRole] = await Role.bulkCreate(ROLES);
 
-  const pw = await bcrypt.hash('Password@123', 10);
+  // DEMO_PASSWORD replaces the well-known demo passwords (required when demo data is loaded in production).
+  const demoPassword = process.env.DEMO_PASSWORD;
+  const pw = await bcrypt.hash(demoPassword || 'Password@123', 10);
   const mkUser = (name, email, roleId, monthsAgo, phone, profile = {}) => User.create({
     name, email, phone, roleId, password: pw, status: 'active', emailVerified: true, createdAt: daysFromNow(-30 * monthsAgo - 3), ...profile,
   });
 
   const kavita = await User.create({
-    name: 'Dr. Kavita Rao', email: 'admin@isip.edu', roleId: admin.id, password: await bcrypt.hash('Admin@123', 10), status: 'active', emailVerified: true, phone: '9800000001', createdAt: daysFromNow(-190),
+    name: 'Dr. Kavita Rao', email: 'admin@isip.edu', roleId: admin.id, password: await bcrypt.hash(demoPassword || 'Admin@123', 10), status: 'active', emailVerified: true, phone: '9800000001', createdAt: daysFromNow(-190),
     headline: 'Program Director, StartIn', about: 'Runs the campus incubation programme: startup verification, mentor network, seed fund and investor connects. 15 years in technology entrepreneurship education.',
     skills: 'Startup Evaluation, Programme Management, Ecosystem Building', linkedin: 'https://linkedin.com/in/kavita-rao-demo',
   });
@@ -269,7 +300,9 @@ export async function seedDatabase({ reset = false } = {}) {
     { userId: vikramU.id, type: 'investment', message: 'AgriSense accepted your offer of ₹10,00,000 🎉', link: '/investor/deals' },
   ]);
 
-  console.log('Demo data loaded. Admin login: admin@isip.edu / Admin@123 · other users (students, mentors, investors): Password@123');
+  console.log(demoPassword
+    ? 'Demo data loaded. All demo accounts use the DEMO_PASSWORD you set (admin: admin@isip.edu).'
+    : 'Demo data loaded. Admin login: admin@isip.edu / Admin@123 · other users (students, mentors, investors): Password@123');
 }
 
 // `npm run seed` — reset and reseed.

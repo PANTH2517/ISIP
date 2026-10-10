@@ -1,6 +1,6 @@
 # StartIn — Intelligent Startup Incubation Platform (ISIP)
 
-A web platform that digitises a college incubation cell (E-Cell / Incubation Center). Startup applications, mentor assignment, milestone tracking, investor funding (cleared by the incubation cell), meetings, workshops, documents, notifications and reports all live in one place, replacing Google Forms, emails and spreadsheets.
+A startup incubation platform for student founders, mentors, investors and program managers. Startup applications, mentor assignment, milestone tracking, investor funding (reviewed by the program team), meetings, workshops, documents, notifications and reports all live in one place, replacing Google Forms, emails and spreadsheets.
 
 **Stack:** React + Tailwind CSS + Chart.js · Node.js + Express · PostgreSQL (or SQLite locally) via Sequelize · JWT auth
 
@@ -30,7 +30,7 @@ On first start the server creates a local SQLite database (`server/data/isip.sql
 
 | Role | Email | Password |
 |---|---|---|
-| Incubation Manager (Admin) | `admin@isip.edu` | `Admin@123` |
+| Program Manager (Admin) | `admin@isip.edu` | `Admin@123` |
 | Mentor | `priya.mentor@isip.edu` (also `rahul.mentor@`, `anita.mentor@`) | `Password@123` |
 | Student Entrepreneur | `aarav.student@isip.edu` (also `riya.student@`, `kabir.student@`, `meera.student@`) | `Password@123` |
 | Investor | `vikram.investor@isip.edu` (also `neha.investor@`) | `Password@123` |
@@ -41,16 +41,13 @@ The login page has one-click buttons that fill these in during development.
 
 ---
 
-## Portal design
+## Design
 
-The frontend follows a civic **e-governance portal** style: accessibility bar (skip link, A- / A / A+ text size,
-remembered per browser), navy/saffron/green theme, breadcrumbs and an
-institutional footer. The design is deliberately generic: it uses no official emblems or government names.
-
-- **Public home page** (`/`): live statistics, programmes, the six-step incubation journey, upcoming events and a
-  notice board, a showcase of approved/incubated startups and FAQs. Data comes from the unauthenticated
-  `GET /api/public/overview` endpoint, which returns aggregates only (no emails, phones or drafts) and is cached for 60s.
-- **Branding:** set `VITE_INSTITUTE_NAME` and `VITE_HELPDESK_EMAIL` in `client/.env` (see `client/.env.example`).
+A modern product UI: Inter / Plus Jakarta Sans, an indigo and violet palette, a sticky top bar and a public
+home page with live statistics, features, the startup journey, a startup showcase, events and FAQs. Data for the
+home page comes from the unauthenticated `GET /api/public/overview` endpoint, which returns aggregates only
+(no emails, phones or drafts) and is cached for 60s. Set `VITE_SUPPORT_EMAIL` in `client/.env` to change the
+contact address.
 
 ---
 
@@ -62,7 +59,7 @@ institutional footer. The design is deliberately generic: it uses no official em
 | 2 | **Startup Registration** | Create / edit / delete startups with name, industry, description, team members, tech stack, problem, solution and business model. Lifecycle: Draft → **Pending → Approved → Incubated** (or Rejected with remarks and resubmit). A startup becomes **Incubated only once it secures finance** (see below) |
 | 3 | **Mentor Management** | Admin assigns/removes mentors; mentors accept assignments; mentor dashboard shows assigned startups, meetings, pending reviews and completed milestones |
 | 4 | **Milestone Tracking** | Approval auto-creates Idea Validation → Prototype → MVP → Customer Testing → Revenue → Funding. Students submit updates, mentors approve or return them, and the **progress bar recalculates automatically**. Mentors can add custom milestones |
-| 5 | **Funding Transactions** | Funding happens **only between founders and investors**. When a founder accepts an investor offer it becomes a transaction, and the Incubation Cell can only **clear** it, put it **on hold** (with a reason) or **cancel** it (with a reason). Founders and investors see the status and the reason; only cleared deals count as finance. Admin **Transactions** page with filters |
+| 5 | **Funding Transactions** | Funding happens **only between founders and investors**. When a founder accepts an investor offer it becomes a transaction, and the admin (program team) can only **clear** it, put it **on hold** (with a reason) or **cancel** it (with a reason). Founders and investors see the status and the reason; only cleared deals count as finance. Admin **Transactions** page with filters |
 | 6 | **Meeting Scheduler** | Students request meetings with assigned mentors; mentors **accept / reject / reschedule** or **schedule meetings directly**. Every meeting can carry a venue or video link; meetings can be completed or cancelled; history stored. **Automatic lifecycle:** both sides check in from 15 min before the start. An unconfirmed request **expires**, and a confirmed meeting nobody checks in to is marked **missed** (auto-cancelled), 10 min after the start. Checked-in meetings auto-complete after an hour. Both people are notified. The same rules apply to investor meetings |
 | 7 | **Document Repository** | Upload PDF, PPT, pitch decks, business plans, prototype images; re-uploading under the same title creates a new **version** with full version history |
 | 8 | **Workshop Management** | Admin creates workshops, hackathons and training sessions (with capacity); students register; admin marks attendance; **PDF certificates** are generated for attendees |
@@ -88,7 +85,7 @@ institutional footer. The design is deliberately generic: it uses no official em
 Draft → Pending → Approved ──(secures finance)──► Incubated
 ```
 
-*Finance* means an **investor deal that the founder accepted and the Incubation Cell cleared**. The Incubation Cell never grants money itself.
+*Finance* means an **investor deal that the founder accepted and the admin cleared**. The platform never grants money itself.
 
 ```
 Investor offer ──(founder accepts)──► Under review ──(admin clears)──► Cleared = finance
@@ -113,7 +110,7 @@ Investor offer ──(founder accepts)──► Under review ──(admin clears
 | Data encryption | Phone numbers encrypted at rest with AES-256-GCM (`utils/crypto.js`) |
 | Audit logging | Every state-changing request is logged; viewable at **Admin → Audit Log** |
 | Backup support | `npm run backup` exports all tables to JSON |
-| Responsive & accessible UI | Tailwind responsive layout with a collapsible mobile sidebar; text-size controls, skip link, breadcrumbs |
+| Responsive & accessible UI | Tailwind responsive layout with a collapsible mobile sidebar; skip link, breadcrumbs, keyboard focus styles |
 | Scalable architecture | Stateless REST API, separate frontend and backend; PostgreSQL in production |
 
 ---
@@ -168,13 +165,31 @@ These map one-to-one to the Experiment 5 class diagram, plus `Reports` and `Audi
 
 ---
 
-## Deployment (as recommended in the project brief)
+## Deployment (Render + Neon)
 
-1. **Database — Neon (PostgreSQL):** create a project and copy the connection string.
-2. **Backend — Render:** new Web Service, root directory `server`, build `npm install`, start `npm start`. Environment variables: `DATABASE_URL`, `JWT_SECRET`, `ENCRYPTION_KEY`, `NODE_ENV=production`, `CLIENT_URL=https://<your-vercel-app>.vercel.app` and the `SMTP_*` settings. SMTP is required in production: without it users can't receive verification or password-reset emails. Tables are created and demo data seeded on first boot, so change the demo passwords (or deactivate the demo accounts from **Admin → Users**) before sharing the site.
-3. **Frontend — Vercel:** import the repo, root directory `client`, set `VITE_API_URL=https://<your-render-app>.onrender.com/api`. (`client/vercel.json` already rewrites all routes to `index.html` for client-side routing.)
+One Render web service runs the API and serves the built React app; the database is PostgreSQL on Neon.
+Everything is described in [`render.yaml`](render.yaml).
 
-Uploaded documents are stored on local disk (`server/uploads`). On Render's free tier that disk is temporary, so attach a persistent disk or switch storage to Cloudinary for production.
+1. **Database (Neon, free):** create a project at neon.tech and copy its connection string
+   (`postgresql://…?sslmode=require`).
+2. **App (Render, free):** in the Render dashboard choose **New → Blueprint**, connect this GitHub repository and
+   pick the `main` branch. Render reads `render.yaml` and asks for:
+   - `DATABASE_URL`: the Neon connection string.
+   - `ADMIN_EMAIL` / `ADMIN_PASSWORD`: your administrator login (password 10+ characters).
+   - `DEMO_PASSWORD`: password for all demo accounts (`SEED_DEMO=true` loads demo data on first start). Leave it
+     empty to start with an empty platform.
+   `JWT_SECRET` and `ENCRYPTION_KEY` are generated automatically; the server refuses to start without them.
+3. Wait for the build, then open `https://<service-name>.onrender.com`. Tables are created on first start.
+
+Notes:
+- **Email:** without `SMTP_*` settings, new accounts are verified automatically and password-reset emails are only
+  written to the log (reset links are never shown in the browser). Add `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
+  `SMTP_PASS` and `MAIL_FROM` to turn on real email.
+- **Uploads:** documents are stored on the service's disk, which is temporary on Render's free plan (cleared on
+  every deploy or restart). Use a paid plan with a persistent disk, or move storage to Cloudinary/S3, before
+  relying on uploads.
+- **Free plan sleep:** the service sleeps after 15 minutes without traffic; the first request then takes about a
+  minute.
 
 ## Future scope
 

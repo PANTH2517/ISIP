@@ -13,9 +13,12 @@ const router = Router();
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 100, standardHeaders: true, legacyHeaders: false });
 const PASSWORD_RULE = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
 const PASSWORD_MSG = 'Password must be at least 8 characters and include a letter and a number';
-const clientUrl = () => process.env.CLIENT_URL || 'http://localhost:5173';
+const clientUrl = () => process.env.CLIENT_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:5173';
 // In development there is no mail server, so links are also returned to the UI for convenience.
 const devExtra = (link) => (process.env.NODE_ENV === 'production' ? {} : { devLink: link });
+// A production deployment without SMTP can't deliver verification emails, so new accounts are verified at
+// sign-up instead (set SMTP_* to turn email verification on). Reset links are never exposed in production.
+const autoVerify = () => process.env.NODE_ENV === 'production' && !process.env.SMTP_HOST;
 
 export async function loadProfile(id) {
   return User.findByPk(id, { include: [{ model: Role, as: 'role' }, { model: Mentor, as: 'mentorProfile' }, { model: Investor, as: 'investorProfile' }] });
@@ -55,16 +58,18 @@ router.post('/register', authLimiter, async (req, res) => {
   if (await User.findOne({ where: { email } })) throw new HttpError(409, 'An account with this email already exists');
 
   const roleRow = await Role.findOne({ where: { roleName: role } });
-  const verifyToken = randomToken();
+  const verifyToken = autoVerify() ? null : randomToken();
   const user = await User.create({
-    name: String(name).trim(), email, phone, password: await bcrypt.hash(password, 10), roleId: roleRow.id, status: 'pending', verifyToken,
+    name: String(name).trim(), email, phone, password: await bcrypt.hash(password, 10), roleId: roleRow.id,
+    ...(autoVerify() ? { status: 'active', emailVerified: true } : { status: 'pending', verifyToken }),
   });
   if (role === 'mentor') await Mentor.create({ userId: user.id, expertise, bio, availability: availability || 'Weekdays' });
   if (role === 'investor') await Investor.create({ userId: user.id, ...investorFields(req.body) });
 
+  await notify(await adminIds(), { message: `New ${role} registered: ${user.name} (${email})`, type: 'info', link: '/admin/users' }, { email: false });
+  if (autoVerify()) return res.status(201).json({ message: 'Registration successful. You can log in now.', verified: true });
   const link = `${clientUrl()}/verify-email?token=${verifyToken}`;
   sendMail(email, 'Verify your StartIn account', `Hi ${user.name},\n\nWelcome to StartIn! Please verify your email: ${link}`).catch(() => {});
-  await notify(await adminIds(), { message: `New ${role} registered: ${user.name} (${email})`, type: 'info', link: '/admin/users' }, { email: false });
   res.status(201).json({ message: 'Registration successful. Please check your email to verify your account.', ...devExtra(link) });
 });
 
@@ -98,7 +103,7 @@ router.post('/login', authLimiter, async (req, res) => {
   });
   if (!user || !(await bcrypt.compare(req.body.password, user.password))) throw new HttpError(401, 'Invalid email or password');
   if (!user.emailVerified) throw new HttpError(403, 'Please verify your email before logging in', { needsVerification: true });
-  if (user.status === 'inactive') throw new HttpError(403, 'Your account has been deactivated. Contact the incubation manager.');
+  if (user.status === 'inactive') throw new HttpError(403, 'Your account has been deactivated. Contact an administrator.');
   req.user = user;
   req.auditAction = 'Login';
   res.json({ token: signToken(user), user: serializeUser(user) });

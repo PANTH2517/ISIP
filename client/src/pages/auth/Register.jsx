@@ -40,7 +40,7 @@ export default function Register() {
 
   if (done) {
     return (
-      <AuthShell title="Check your inbox" footer={<Link to="/login" className="font-semibold text-indigo-600 hover:underline">Back to login</Link>}>
+      <AuthShell title={done.verified ? 'Account created' : 'Check your inbox'} footer={<Link to="/login" className="font-semibold text-indigo-600 hover:underline">{done.verified ? 'Log in now' : 'Back to login'}</Link>}>
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-800">
           <MailCheck className="mb-2 h-6 w-6" />
           {done.message}
