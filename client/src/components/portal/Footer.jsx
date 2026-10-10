@@ -56,7 +56,7 @@ export default function Footer() {
           </ul>
         </div>
       </div>
-      <div className="tricolor h-1" />
+      <div className="tricolor h-3" />
     </footer>
   );
 }

@@ -7,8 +7,8 @@
  * as `saffron-*` and `ingreen-*` for accents.
  */
 @theme {
-  --font-sans: "Noto Sans", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Poppins", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Noto Sans", "Noto Sans Devanagari", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Poppins", "Noto Sans Devanagari", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
 
   --color-indigo-50: #eef3fb;
   --color-indigo-100: #dbe5f5;
@@ -70,13 +70,16 @@
   .table tbody tr:hover td { @apply bg-slate-50/70; }
 
   /* Saffron / white / green strip used at the very top of the portal. */
-  .tricolor { background: linear-gradient(90deg, #ff9933 0 33.33%, #e2e6ee 33.33% 66.66%, #138808 66.66% 100%); }
+  /* Tricolour band, stacked like the flag (saffron / white / green) so the white stays visible on any background. */
+  .tricolor { background: linear-gradient(180deg, #ff9933 0 33.34%, #ffffff 33.34% 66.67%, #138808 66.67% 100%); }
 
-  /* Subtle dotted texture for hero banners. */
+  /* Jaali (lattice screen) texture for hero banners. */
   .hero-pattern {
-    background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px);
-    background-size: 18px 18px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.09' stroke-width='1'%3E%3Cpath d='M28 4 52 28 28 52 4 28z'/%3E%3Ccircle cx='28' cy='28' r='9'/%3E%3Cpath d='M28 19v18M19 28h18'/%3E%3Cpath d='M0 0l8 8M56 0l-8 8M0 56l8-8M56 56l-8-8'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 56px 56px;
   }
+  /* Devanagari text sits a little lower and needs no letter-spacing. */
+  .hindi { font-family: "Noto Sans Devanagari", var(--font-sans); letter-spacing: 0; }
 
 }
 

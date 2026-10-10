@@ -49,7 +49,7 @@ function SectionTitle({ eyebrow, title, text, light = false }) {
     <div className="mx-auto mb-10 max-w-2xl text-center">
       <p className={`text-xs font-bold uppercase tracking-[0.2em] ${light ? 'text-saffron-300' : 'text-saffron-600'}`}>{eyebrow}</p>
       <h2 className={`mt-2 font-display text-3xl font-bold tracking-tight ${light ? 'text-white' : 'text-indigo-950'}`}>{title}</h2>
-      <div className="mx-auto mt-3 flex w-24 overflow-hidden rounded-full"><span className="h-1 flex-1 bg-[#ff9933]" /><span className="h-1 flex-1 bg-slate-200" /><span className="h-1 flex-1 bg-[#138808]" /></div>
+      <div className="mx-auto mt-3 flex w-28 gap-0.5" aria-hidden="true"><span className="h-1.5 flex-1 rounded-l-full bg-[#ff9933]" /><span className={`h-1.5 flex-1 ${light ? 'bg-white' : 'bg-[#000080]'}`} /><span className="h-1.5 flex-1 rounded-r-full bg-[#138808]" /></div>
       {text && <p className={`mt-4 ${light ? 'text-indigo-100' : 'text-slate-600'}`}>{text}</p>}
     </div>
   );
@@ -88,7 +88,8 @@ export default function Landing() {
             <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-saffron-200">
               <BadgeCheck className="h-4 w-4" />Applications open all year · {BRAND.cell}
             </span>
-            <h1 className="mt-5 font-display text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl">
+            <p lang="hi" className="hindi mt-5 text-lg font-semibold text-saffron-300">नवाचार से उद्यम तक</p>
+            <h1 className="mt-1 font-display text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl">
               From campus idea to <span className="text-saffron-400">incubated startup</span>, in one portal.
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-indigo-100">

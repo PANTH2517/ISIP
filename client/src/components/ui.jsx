@@ -155,7 +155,7 @@ export function PageHeader({ title, subtitle, actions }) {
     <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4">
       <div>
         <h1 className="font-display text-2xl font-bold tracking-tight text-indigo-950">{title}</h1>
-        <div className="mt-1.5 flex w-16 overflow-hidden rounded-full"><span className="h-1 flex-1 bg-[#ff9933]" /><span className="h-1 flex-1 bg-slate-200" /><span className="h-1 flex-1 bg-[#138808]" /></div>
+        <div className="mt-2 flex w-20 gap-0.5" aria-hidden="true"><span className="h-1.5 flex-1 rounded-l-full bg-[#ff9933]" /><span className="h-1.5 flex-1 bg-[#000080]" /><span className="h-1.5 flex-1 rounded-r-full bg-[#138808]" /></div>
         {subtitle && <p className="mt-2 text-sm text-slate-600">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}

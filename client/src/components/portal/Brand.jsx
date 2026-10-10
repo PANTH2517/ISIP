@@ -25,8 +25,9 @@ export function Wordmark({ to = '/', inverse = false, compact = false }) {
           {BRAND.name}
           <span className={`ml-2 hidden align-middle text-xs font-semibold uppercase tracking-[0.18em] sm:inline ${inverse ? 'text-saffron-300' : 'text-saffron-600'}`}>Portal</span>
         </p>
+        <p lang="hi" className={`hindi text-xs font-semibold sm:text-sm ${inverse ? 'text-saffron-200' : 'text-saffron-700'}`}>{BRAND.fullNameHi}</p>
         <p className={`text-xs font-medium sm:text-sm ${inverse ? 'text-indigo-100' : 'text-slate-600'}`}>{BRAND.fullName}</p>
-        {!compact && <p className={`hidden text-[11px] sm:block ${inverse ? 'text-indigo-200' : 'text-slate-500'}`}>{BRAND.cell} · {BRAND.institute}</p>}
+        {!compact && <p className={`hidden text-[11px] lg:block ${inverse ? 'text-indigo-200' : 'text-slate-500'}`}>{BRAND.cell} · {BRAND.institute}</p>}
       </div>
     </Link>
   );

@@ -49,7 +49,7 @@ export default function TopBar() {
   return (
     <div className="shrink-0">
       <a href="#main-content" className="sr-only rounded bg-white font-semibold text-indigo-900 focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:px-3 focus:py-1 focus:shadow">Skip to main content</a>
-      <div className="tricolor h-1" />
+      <div className="tricolor h-3" />
     </div>
   );
 }

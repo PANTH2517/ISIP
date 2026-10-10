@@ -27,7 +27,7 @@ export default function WelcomeBanner({ title, subtitle, actions }) {
         </div>
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
       </div>
-      <div className="tricolor absolute inset-x-0 bottom-0 h-1" />
+      <div className="tricolor absolute inset-x-0 bottom-0 h-[6px]" />
     </div>
   );
 }
