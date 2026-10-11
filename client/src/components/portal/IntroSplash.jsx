@@ -4,7 +4,7 @@ import { BRAND } from '../../config/brand';
 const SEEN_KEY = 'isip_intro_seen';
 const REPLAY_EVENT = 'isip:replay-intro';
 const FADE_MS = 700;
-const MAX_MS = 15000; // never hold visitors longer than this, whatever the animation does
+const MAX_MS = 20000; // never hold visitors longer than this, whatever the animation does
 
 /** Whether to play the intro on its own: once per browser session, never for reduced-motion users or in tests. */
 function shouldShow() {

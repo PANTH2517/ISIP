@@ -41,11 +41,11 @@
  *  1. The idea      light streams in and fuses into a seed, which falls and lands
  *  2. Incubation    circuit roots spread, a circuit tree grows and leafs
  *  3. Ecosystem     a ring forms; founder, mentor, investor and incubation cell join and exchange pulses
- *  4. The journey   a rising path ignites the six portal milestones and bursts at the top
+ *  4. The journey   the camera follows a comet up a rising path, stopping at each of the six portal milestones
  *  5. The name
  */
 (() => {
-  const DUR = 11.5;
+  const DUR = 16.5;
   const embed = new URLSearchParams(location.search).has('embed');
   if (embed) document.documentElement.className = 'embed';
   const $ = (id) => document.getElementById(id);
@@ -125,9 +125,32 @@
     { name: 'Founder', deg: -150, draw: drawFounder }, { name: 'Mentor', deg: -30, draw: drawMentor },
     { name: 'Investor', deg: 30, draw: drawInvestor }, { name: 'Incubation Cell', deg: 150, draw: drawCell },
   ].map((r) => ({ ...r, x: HEART[0] + Math.cos(r.deg * Math.PI / 180) * RING_R, y: HEART[1] + Math.sin(r.deg * Math.PI / 180) * RING_R }));
-  const J = poly([[230, 770], [410, 650], [560, 690], [740, 528], [905, 566], [1080, 372], [1255, 236], [1395, 112]]);
-  const STEPS = ['Register', 'Submit idea', 'Verified', 'Mentored', 'Funded', 'Incubated'];
-  const stepAt = STEPS.map((_, i) => J.L[i + 1] / J.len);
+  // a smooth rising curve (Catmull-Rom through the control points), one milestone at each inner point
+  function catmull(pts, n = 26) {
+    const out = [pts[0]], idx = [0];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[Math.max(i - 1, 0)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(i + 2, pts.length - 1)];
+      for (let k = 1; k <= n; k++) {
+        const t = k / n, t2 = t * t, t3 = t2 * t;
+        out.push([0, 1].map((d) => .5 * (2 * p1[d] + (-p0[d] + p2[d]) * t + (2 * p0[d] - 5 * p1[d] + 4 * p2[d] - p3[d]) * t2 + (-p0[d] + 3 * p1[d] - 3 * p2[d] + p3[d]) * t3)));
+      }
+      idx.push(out.length - 1);
+    }
+    return { pts: out, idx };
+  }
+  const JC = catmull([[160, 800], [380, 690], [560, 722], [760, 560], [945, 600], [1120, 402], [1300, 262], [1470, 110]]);
+  const J = poly(JC.pts);
+  const STEPS = [
+    ['Register', 'Create your account'], ['Submit idea', 'Problem, solution & team'], ['Verified', 'Approved by the Cell'],
+    ['Mentored', 'Guided from idea to revenue'], ['Funded', 'An investor deal is secured'], ['Incubated', 'Officially incubated'],
+  ];
+  const stepAt = STEPS.map((_, i) => J.L[JC.idx[i + 1]] / J.len);
+  // the traveller eases into each milestone and pauses there before moving on
+  const JS = 7.7, TRAVEL = .58, DWELL = .27, legs = [], arrive = [];
+  { const fr = [0, ...stepAt, 1]; let tt = JS; for (let i = 0; i < 7; i++) { legs.push([tt, tt + TRAVEL, fr[i], fr[i + 1]]); tt += TRAVEL; if (i < 6) { arrive.push(tt); tt += DWELL; } } }
+  const JEND = legs[legs.length - 1][1];
+  function jProg(t) { if (t <= JS) return 0; for (const [a, b, fa, fb] of legs) { if (t < a) return fa; if (t < b) return lerp(fa, fb, easeInOut(seg(t, a, b))); } return 1; }
+  const miniBursts = STEPS.map(() => Array.from({ length: 16 }, () => ({ a: R() * Math.PI * 2, d: 50 + R() * 70, r: 1 + R() * 1.6 })));
 
   // ---------- role icons (centred on 0,0; ~36px across)
   function iconStroke(rgb, a) { ctx.strokeStyle = `rgba(${rgb},${a})`; ctx.lineWidth = 3.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; }
@@ -152,6 +175,22 @@
     ctx.fillStyle = `rgba(${ORANGE},${a})`; ctx.beginPath(); ctx.arc(0, -11, 3, 0, 7); ctx.fill();
   }
 
+  // ---------- milestone icons (centred on 0,0)
+  const STEP_ICONS = [
+    (a) => { ctx.save(); ctx.translate(-4, 0); ctx.scale(.72, .72); person(a, CYAN); ctx.restore(); iconStroke(ORANGE, a); ctx.beginPath(); ctx.moveTo(13, -14); ctx.lineTo(13, -4); ctx.moveTo(8, -9); ctx.lineTo(18, -9); ctx.stroke(); },
+    (a) => { iconStroke(CYAN, a); ctx.beginPath(); ctx.moveTo(-11, -15); ctx.lineTo(5, -15); ctx.lineTo(11, -9); ctx.lineTo(11, 15); ctx.lineTo(-11, 15); ctx.closePath(); ctx.stroke();
+      ctx.lineWidth = 2.4; [-4, 2, 8].forEach((y) => { ctx.beginPath(); ctx.moveTo(-6, y); ctx.lineTo(6, y); ctx.stroke(); }); ctx.fillStyle = `rgba(${ORANGE},${a})`; star4(12, -15, 6); },
+    (a) => { iconStroke(CYAN, a); ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(13, -11); ctx.lineTo(13, 0); ctx.quadraticCurveTo(12, 11, 0, 17); ctx.quadraticCurveTo(-12, 11, -13, 0); ctx.lineTo(-13, -11); ctx.closePath(); ctx.stroke();
+      iconStroke(ORANGE, a); ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(-1, 5); ctx.lineTo(7, -5); ctx.stroke(); },
+    (a) => { ctx.save(); ctx.scale(.78, .78); drawMentor(a); ctx.restore(); },
+    (a) => { ctx.save(); ctx.scale(.8, .8); drawInvestor(a); ctx.restore(); },
+    (a) => { iconStroke(CYAN, a); ctx.save(); ctx.rotate(Math.PI / 4);
+      ctx.beginPath(); ctx.moveTo(0, -18); ctx.quadraticCurveTo(9, -9, 7, 8); ctx.lineTo(-7, 8); ctx.quadraticCurveTo(-9, -9, 0, -18); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, -5, 3, 0, 7); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-7, 2); ctx.lineTo(-12, 11); ctx.lineTo(-7, 9); ctx.moveTo(7, 2); ctx.lineTo(12, 11); ctx.lineTo(7, 9); ctx.stroke();
+      iconStroke(ORANGE, a); ctx.beginPath(); ctx.moveTo(-3, 12); ctx.lineTo(0, 19); ctx.lineTo(3, 12); ctx.stroke(); ctx.restore(); },
+  ];
+
   // ---------- particles (deterministic)
   const dust = Array.from({ length: 180 }, () => ({ x: R(), y: R(), r: .4 + R() * 1.6, vx: (R() - .5) * .006, vy: -.002 - R() * .01, w: 1 + R() * 3, ph: R() * 6.3, c: R() < .12 ? ORANGE : (R() < .5 ? CYAN : WHITE) }));
   const conv = Array.from({ length: 120 }, () => ({ a: R() * Math.PI * 2, d: 420 + R() * 700, dl: R() * .5, c: R() < .25 ? ORANGE : CYAN }));
@@ -160,11 +199,18 @@
   const nets = [[.06, .2], [.93, .24], [.08, .84], [.92, .82]].map(([cx, cy], k) => { const r2 = rng(100 + k); return Array.from({ length: 7 }, () => ({ x: cx + (r2() - .5) * .16, y: cy + (r2() - .5) * .22, ph: r2() * 6.3 })); });
 
   // ---------- camera keyframes: [time, centreX, centreY, zoom]
-  const CAM = [[0, 800, 390, 1.65], [1.5, 800, 400, 1.35], [2.3, 800, 520, 1.3], [4.6, 800, 420, 1.0], [6.8, 800, 400, .95], [9.0, 810, 440, .8], [DUR, 810, 430, .76]];
-  function camera(t) {
+  const CAM = [[0, 800, 390, 1.65], [1.5, 800, 400, 1.35], [2.3, 800, 520, 1.3], [4.6, 800, 420, 1.0], [7.3, 800, 400, .93]];
+  function keyCam(t) {
     let i = 1; while (i < CAM.length - 1 && CAM[i][0] < t) i++;
     const a = CAM[i - 1], b = CAM[i], p = easeInOut(seg(t, a[0], b[0]));
     return [lerp(a[1], b[1], p), lerp(a[2], b[2], p), lerp(a[3], b[3], p)];
+  }
+  function camera(t) {
+    let [cx, cy, k] = keyCam(t);
+    const [fx, fy] = pointAt(J, jProg(t)), follow = easeInOut(seg(t, 7.3, 8.2)), wide = easeInOut(seg(t, JEND - .1, JEND + 1.0));
+    cx = lerp(cx, fx + 110, follow); cy = lerp(cy, fy + 5, follow); k = lerp(k, 1.12, follow);
+    cx = lerp(cx, 815, wide); cy = lerp(cy, 455, wide); k = lerp(k, .76, wide) - .03 * easeInOut(seg(t, JEND + 1.0, DUR));
+    return [cx, cy, k];
   }
 
   const cv = $('bg'), ctx = cv.getContext('2d');
@@ -221,7 +267,7 @@
       ctx.fillStyle = `rgba(${WHITE},${seedA * (1 - fall)})`; star4(800, seedY, 30 + 34 * sg);
     }
     // impact: ground line spreads out, ripples run along it
-    const gp = easeOut(seg(t, 2.05, 2.9)), sceneA = 1 - .78 * seg(t, 6.8, 7.4) - .07 * seg(t, 8.9, 9.5);
+    const gp = easeOut(seg(t, 2.05, 2.9)), sceneA = 1 - .8 * seg(t, 7.3, 7.9) - .06 * seg(t, JEND + .4, JEND + 1.0);
     if (gp > 0) {
       const half = 680 * gp, lg = ctx.createLinearGradient(800 - half, 0, 800 + half, 0);
       lg.addColorStop(0, `rgba(${BLUE},0)`); lg.addColorStop(.5, `rgba(${CYAN},${.9 * sceneA})`); lg.addColorStop(1, `rgba(${BLUE},0)`);
@@ -272,42 +318,81 @@
       ctx.strokeStyle = `rgba(${i === 0 ? ORANGE : CYAN},${a})`; ctx.lineWidth = 2.5; ctx.stroke();
       r.draw(a);
       ctx.restore();
-      const la = seg(t, 5.8 + i * .12, 6.2 + i * .12) * (1 - seg(t, 6.8, 7.1));
+      const la = seg(t, 5.8 + i * .12, 6.2 + i * .12) * (1 - seg(t, 7.3, 7.6));
       if (la > 0) { ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = `rgba(207,240,255,${la})`; ctx.font = '600 22px Poppins, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(r.name, r.x, r.y + 80); ctx.globalCompositeOperation = 'lighter'; }
     });
     // pulses chasing round the ring
     if (rp >= 1) for (let n = 0; n < 4; n++) { const ang = t * .9 + n * Math.PI / 2; dot(HEART[0] + Math.cos(ang) * RING_R, HEART[1] + Math.sin(ang) * RING_R, 4, n % 2 ? ORANGE : WHITE, sceneA); }
 
-    // 4. THE JOURNEY: a rising path ignites the six milestones and bursts at the top
-    const jp = easeInOut(seg(t, 7.0, 8.9)), jA = 1 - .62 * seg(t, 9.0, 9.6);
+    // 4. THE JOURNEY: the camera follows a comet up a rising curve; each milestone blooms as it arrives
+    const jp = jProg(t), jA = 1 - .55 * seg(t, JEND + .6, JEND + 1.2), j0 = seg(t, JS - .5, JS);
+    if (j0 > 0) {
+      const [sx, sy] = J.pts[0]; dot(sx, sy, 7 * back(j0), TEAL, jA);
+      ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = `rgba(207,240,255,${j0 * jA})`; ctx.font = '600 20px Poppins, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Your idea', sx, sy + 44); ctx.globalCompositeOperation = 'lighter';
+    }
     if (jp > 0) {
-      const lg = ctx.createLinearGradient(J.pts[0][0], J.pts[0][1], 1395, 112);
+      // growth-chart glow under the path
+      if (tracePartial(J, jp)) {
+        const [ex] = pointAt(J, jp); ctx.lineTo(ex, 1100); ctx.lineTo(J.pts[0][0], 1100); ctx.closePath();
+        const ag = ctx.createLinearGradient(0, 100, 0, 900); ag.addColorStop(0, `rgba(${TEAL},${.13 * jA * (1 - seg(t, JEND, JEND + .9))})`); ag.addColorStop(1, `rgba(${BLUE},0)`);
+        ctx.fillStyle = ag; ctx.fill();
+      }
+      // the path: soft halo, bright core, energy flowing along it
+      const lg = ctx.createLinearGradient(160, 800, 1470, 110);
       lg.addColorStop(0, `rgba(${CYAN},${jA})`); lg.addColorStop(.6, `rgba(${TEAL},${jA})`); lg.addColorStop(1, `rgba(${ORANGE},${jA})`);
-      if (tracePartial(J, jp)) { ctx.strokeStyle = `rgba(${CYAN},${.18 * jA})`; ctx.lineWidth = 22; ctx.stroke(); ctx.strokeStyle = lg; ctx.lineWidth = 5; ctx.stroke(); }
-      STEPS.forEach((name, i) => {
-        if (jp < stepAt[i]) return;
-        const since = (jp - stepAt[i]) * 1.9, s = back(clamp(since / .12)), [x, y] = J.pts[i + 1], col = i === 5 ? ORANGE : CYAN;
-        const q = clamp(since / .25); if (q < 1) { ctx.strokeStyle = `rgba(${col},${(1 - q) * jA})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, 14 + 50 * q, 0, 7); ctx.stroke(); }
-        ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = `rgba(8,22,48,${jA})`; ctx.beginPath(); ctx.arc(x, y, 17 * s, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'lighter';
-        ctx.strokeStyle = `rgba(${col},${jA})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, 17 * s, 0, 7); ctx.stroke();
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.fillStyle = `rgba(255,255,255,${jA * clamp(since / .1)})`; ctx.font = '700 17px Poppins, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(i + 1), x, y + 1);
-        const above = i % 2 === 1, ly = y + (above ? -46 : 50), la = jA * clamp((since - .05) / .15);
-        ctx.font = '600 22px Poppins, sans-serif'; const tw = ctx.measureText(name).width + 24;
-        ctx.fillStyle = `rgba(8,22,48,${.85 * la})`; ctx.beginPath(); ctx.roundRect(x - tw / 2, ly - 17, tw, 34, 17); ctx.fill();
-        ctx.strokeStyle = `rgba(${col},${.5 * la})`; ctx.lineWidth = 1.5; ctx.stroke();
-        ctx.fillStyle = `rgba(${i === 5 ? '255,170,120' : '207,240,255'},${la})`; ctx.fillText(name, x, ly + 1);
-        ctx.textBaseline = 'alphabetic'; ctx.globalCompositeOperation = 'lighter';
-      });
-      if (jp < 1) { const [x, y, ang] = pointAt(J, jp); dot(x, y, 9, WHITE, 1); for (let n = 1; n <= 6; n++) { const [tx, ty] = pointAt(J, jp - n * .012); dot(tx, ty, 6 - n * .7, CYAN, .7 - n * .1); } ctx.fillStyle = `rgba(${WHITE},.9)`; star4(x, y, 22); void ang; }
-      else {
-        const [x, y] = J.pts[J.pts.length - 1], bp = seg(t, 8.9, 10.2);
-        ctx.fillStyle = `rgba(${ORANGE},${jA})`; ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(112 - 236, 1395 - 1255)); ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(-12, -14); ctx.lineTo(-12, 14); ctx.closePath(); ctx.fill(); ctx.restore();
-        if (bp > 0 && bp < 1) {
-          const e = easeOut(bp);
-          burst.forEach((b) => { const d = b.s * e; ctx.fillStyle = `rgba(${b.c},${(1 - bp) * .9})`; ctx.beginPath(); ctx.arc(x + Math.cos(b.a) * d, y + Math.sin(b.a) * d, b.r * 1.6, 0, 7); ctx.fill(); });
-          [0, .12].forEach((o) => { const q = clamp((bp - o) / .7); if (q <= 0 || q >= 1) return; ctx.strokeStyle = `rgba(${o ? ORANGE : CYAN},${(1 - q) * .9})`; ctx.lineWidth = 6 * (1 - q) + .5; ctx.beginPath(); ctx.arc(x, y, 20 + 300 * easeOut(q), 0, 7); ctx.stroke(); });
-        }
+      tracePartial(J, jp);
+      ctx.strokeStyle = `rgba(${CYAN},${.1 * jA})`; ctx.lineWidth = 34; ctx.stroke();
+      ctx.strokeStyle = `rgba(${CYAN},${.22 * jA})`; ctx.lineWidth = 14; ctx.stroke();
+      ctx.strokeStyle = lg; ctx.lineWidth = 6; ctx.stroke();
+      ctx.setLineDash([16, 44]); ctx.lineDashOffset = -t * 170; ctx.strokeStyle = `rgba(${WHITE},${.6 * jA})`; ctx.lineWidth = 2.6; ctx.stroke(); ctx.setLineDash([]);
+    }
+    STEPS.forEach(([name, caption], i) => {
+      const since = t - arrive[i]; if (since < 0) return;
+      const [x, y] = J.pts[JC.idx[i + 1]], col = i === 5 ? ORANGE : CYAN, s = back(seg(since, 0, .38)), a = jA;
+      // arrival: two rings ripple out and a spray of sparks
+      [[0, .75], [.15, .95]].forEach(([o, e]) => { const q = seg(since, o, e); if (q > 0 && q < 1) { ctx.strokeStyle = `rgba(${col},${(1 - q) * a})`; ctx.lineWidth = 3.5 * (1 - q) + .5; ctx.beginPath(); ctx.arc(x, y, 28 + 80 * easeOut(q), 0, 7); ctx.stroke(); } });
+      const bq = seg(since, 0, .7); if (bq < 1) miniBursts[i].forEach((b) => { const d = b.d * easeOut(bq); ctx.fillStyle = `rgba(${i % 2 ? ORANGE : CYAN},${(1 - bq) * a})`; ctx.beginPath(); ctx.arc(x + Math.cos(b.a) * d, y + Math.sin(b.a) * d, b.r * 1.5, 0, 7); ctx.fill(); });
+      // two satellites keep orbiting each reached milestone
+      const sa2 = seg(since, .3, .7) * a; for (let n = 0; n < 2; n++) { const an = t * 1.7 + i + n * Math.PI; dot(x + Math.cos(an) * 44, y + Math.sin(an) * 44 * .55, 2.6, n ? ORANGE : CYAN, sa2); }
+      // the node with its icon and number
+      ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+      ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = `rgba(8,22,48,${.95 * a})`; ctx.beginPath(); ctx.arc(0, 0, 30, 0, 7); ctx.fill();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.strokeStyle = `rgba(${col},${.22 * a})`; ctx.lineWidth = 14; ctx.beginPath(); ctx.arc(0, 0, 30, 0, 7); ctx.stroke();
+      ctx.strokeStyle = `rgba(${col},${a})`; ctx.lineWidth = 3; ctx.stroke();
+      STEP_ICONS[i](a);
+      ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = `rgba(${col},${a})`; ctx.beginPath(); ctx.arc(22, -22, 11, 0, 7); ctx.fill();
+      ctx.fillStyle = `rgba(8,22,48,${a})`; ctx.font = '800 14px Poppins, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(i + 1), 22, -21);
+      ctx.restore(); ctx.textBaseline = 'alphabetic';
+      // the milestone card slides in above or below
+      const ca = seg(since, .12, .45) * a; if (ca <= 0) return;
+      const up = i % 2 === 0, off = (1 - easeOut(seg(since, .12, .5))) * 18, cy2 = y + (up ? -112 : 112) + (up ? off : -off);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.font = '700 26px Poppins, sans-serif'; const w1 = ctx.measureText(name).width; ctx.font = '500 17px Poppins, sans-serif'; const w2 = ctx.measureText(caption).width;
+      const cw = Math.max(w1, w2) + 40, ch = 74;
+      ctx.setLineDash([3, 6]); ctx.strokeStyle = `rgba(${col},${.6 * ca})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, y + (up ? -34 : 34)); ctx.lineTo(x, cy2 + (up ? ch / 2 : -ch / 2)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = `rgba(8,22,48,${.9 * ca})`; ctx.beginPath(); ctx.roundRect(x - cw / 2, cy2 - ch / 2, cw, ch, 16); ctx.fill();
+      ctx.strokeStyle = `rgba(${col},${.7 * ca})`; ctx.lineWidth = 1.8; ctx.stroke();
+      ctx.textAlign = 'center';
+      ctx.fillStyle = `rgba(${i === 5 ? '255,170,120' : '235,250,255'},${ca})`; ctx.font = '700 26px Poppins, sans-serif'; ctx.fillText(name, x, cy2 - 3);
+      ctx.fillStyle = `rgba(159,216,240,${ca})`; ctx.font = '500 17px Poppins, sans-serif'; ctx.fillText(caption, x, cy2 + 22);
+      ctx.globalCompositeOperation = 'lighter';
+    });
+    if (jp > 0 && jp < 1) {
+      // the comet: glowing head, long sparkling tail
+      const [x, y] = pointAt(J, jp);
+      for (let n = 22; n >= 1; n--) { const [tx, ty] = pointAt(J, Math.max(0, jp - n * .005)); dot(tx + Math.sin(t * 9 + n) * n * .35, ty + Math.cos(t * 7 + n) * n * .35, 7 - n * .25, n % 4 ? CYAN : ORANGE, .75 - n * .03); }
+      const hg = ctx.createRadialGradient(x, y, 0, x, y, 90); hg.addColorStop(0, 'rgba(255,255,255,.55)'); hg.addColorStop(1, 'rgba(143,243,255,0)'); ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(x, y, 90, 0, 7); ctx.fill();
+      dot(x, y, 10, WHITE, 1); ctx.fillStyle = 'rgba(255,255,255,.95)'; star4(x, y, 26 + 4 * Math.sin(t * 20));
+    } else if (jp >= 1) {
+      // summit: arrowhead, flare and a big burst of light
+      const [x, y] = J.pts[J.pts.length - 1], [px, py] = J.pts[J.pts.length - 3], bp = seg(t, JEND, JEND + 1.4);
+      ctx.fillStyle = `rgba(${ORANGE},${jA})`; ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(y - py, x - px)); ctx.beginPath(); ctx.moveTo(22, 0); ctx.lineTo(-14, -17); ctx.lineTo(-6, 0); ctx.lineTo(-14, 17); ctx.closePath(); ctx.fill(); ctx.restore();
+      if (bp > 0 && bp < 1) {
+        const e = easeOut(bp);
+        burst.forEach((b) => { const d = b.s * 1.2 * e; ctx.fillStyle = `rgba(${b.c},${(1 - bp) * .9})`; ctx.beginPath(); ctx.arc(x + Math.cos(b.a) * d, y + Math.sin(b.a) * d, b.r * 1.8, 0, 7); ctx.fill(); });
+        [0, .12, .24].forEach((o, n) => { const q = clamp((bp - o) / .7); if (q <= 0 || q >= 1) return; ctx.strokeStyle = `rgba(${n === 1 ? ORANGE : CYAN},${(1 - q) * .9})`; ctx.lineWidth = 7 * (1 - q) + .5; ctx.beginPath(); ctx.arc(x, y, 24 + 360 * easeOut(q), 0, 7); ctx.stroke(); });
+        const fl = 1 - bp; ctx.fillStyle = `rgba(255,255,255,${fl})`; star4(x, y, 40 + 80 * e);
       }
     }
     // twinkles once the world is alive
@@ -316,7 +401,7 @@
     ctx.globalCompositeOperation = 'source-over';
 
     // 5. THE NAME: darken the middle so the title reads clearly
-    const vg = seg(t, 8.9, 9.6);
+    const vg = seg(t, JEND + .6, JEND + 1.3);
     if (vg > 0) {
       ctx.setTransform(DPR * S, 0, 0, DPR * S, DPR * OX, DPR * OY);
       const g = ctx.createRadialGradient(800, 500, 0, 800, 500, 620); g.addColorStop(0, `rgba(5,13,31,${.78 * vg})`); g.addColorStop(1, 'rgba(5,13,31,0)');
@@ -332,14 +417,14 @@
     background(t);
     scene(t);
     letters.forEach((s, i) => {
-      const p = easeOut(seg(t, 9.15 + i * .07, 9.75 + i * .07));
+      const p = easeOut(seg(t, JEND + .9 + i * .07, JEND + 1.5 + i * .07));
       s.style.opacity = p; s.style.transform = `translateY(${(1 - p) * 70}px) scale(${.88 + .12 * p})`; s.style.filter = `blur(${(1 - p) * 12}px)`;
     });
-    const sp = easeOut(seg(t, 9.7, 10.5)), sub = $('sub');
+    const sp = easeOut(seg(t, JEND + 1.45, JEND + 2.25)), sub = $('sub');
     sub.style.clipPath = `inset(0 ${(1 - sp) * 50}% 0 ${(1 - sp) * 50}%)`;
-    sub.style.backgroundPosition = `${100 - 100 * easeInOut(seg(t, 10.2, 11.2))}% 0`;
-    $('line').style.transform = `scaleX(${easeOut(seg(t, 9.95, 10.8))})`; $('line').style.opacity = seg(t, 9.95, 10.05);
-    $('shine').style.backgroundPosition = `${130 - 160 * easeInOut(seg(t, 10.3, 11.1))}% 0`;
+    sub.style.backgroundPosition = `${100 - 100 * easeInOut(seg(t, JEND + 2.0, JEND + 3.0))}% 0`;
+    $('line').style.transform = `scaleX(${easeOut(seg(t, JEND + 1.7, JEND + 2.55))})`; $('line').style.opacity = seg(t, JEND + 1.7, JEND + 1.8);
+    $('shine').style.backgroundPosition = `${130 - 160 * easeInOut(seg(t, JEND + 2.1, JEND + 2.9))}% 0`;
     $('fade').style.opacity = Math.max(1 - seg(t, 0, .35), seg(t, DUR - .45, DUR));
   }
 
