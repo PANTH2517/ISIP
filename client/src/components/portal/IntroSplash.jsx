@@ -23,7 +23,6 @@ export default function IntroSplash() {
   const [leaving, setLeaving] = useState(false);
   const [progress, setProgress] = useState(0);
   const videoRef = useRef(null);
-  const skipRef = useRef(null);
 
   const finish = useCallback(() => {
     try { sessionStorage.setItem(SEEN_KEY, '1'); } catch { /* storage unavailable */ }
@@ -35,7 +34,6 @@ export default function IntroSplash() {
     if (!visible) return undefined;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    skipRef.current?.focus();
     const maxTimer = setTimeout(finish, MAX_MS);
     const onKey = (e) => { if (e.key === 'Escape') finish(); };
     window.addEventListener('keydown', onKey);
@@ -73,7 +71,6 @@ export default function IntroSplash() {
         onTimeUpdate={(e) => setProgress(e.currentTarget.duration ? e.currentTarget.currentTime / e.currentTarget.duration : 0)}
       />
       <button
-        ref={skipRef}
         type="button"
         onClick={finish}
         aria-label="Skip intro"
