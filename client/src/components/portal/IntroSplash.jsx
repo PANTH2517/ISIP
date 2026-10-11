@@ -78,7 +78,7 @@ export default function IntroSplash() {
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-[#0a1b38] via-[#0a1b38]/70 to-transparent" />
 
       <div className={`absolute inset-x-0 bottom-16 flex flex-col items-center px-6 text-center transition-all duration-1000 ${showBrand ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
-        <img src="/logo-256.png" alt="" className="h-24 w-24 rounded-3xl bg-white p-1.5 shadow-lg shadow-cyan-500/30" />
+        <img src="/logo.svg" alt="" className="h-24 w-24 rounded-3xl bg-white p-1 shadow-lg shadow-black/30" />
         <p className="mt-4 font-display text-4xl font-bold tracking-tight text-white sm:text-5xl">{BRAND.name}</p>
         <p className="mt-2 max-w-md text-sm text-indigo-100 sm:text-base">{BRAND.fullName}</p>
       </div>
@@ -92,7 +92,7 @@ export default function IntroSplash() {
         Skip intro
       </button>
       <div className="absolute inset-x-0 bottom-0 h-1 bg-white/10" aria-hidden="true">
-        <div className="h-full bg-gradient-to-r from-cyan-400 to-violet-400 transition-[width] duration-200 ease-linear" style={{ width: `${Math.round(progress * 100)}%` }} />
+        <div className="h-full bg-gradient-to-r from-saffron-400 to-saffron-600 transition-[width] duration-200 ease-linear" style={{ width: `${Math.round(progress * 100)}%` }} />
       </div>
     </div>
   );

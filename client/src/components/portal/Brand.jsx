@@ -2,11 +2,11 @@ import { Link } from 'react-router-dom';
 import { BRAND } from '../../config/brand';
 
 /**
- * StartIn logo (lightbulb with a rocket). The artwork's glow is designed for light backgrounds, so on dark
- * surfaces pass `onDark` to show it on a light tile.
+ * StartIn logo: a rocket launching over three rising milestones, on a navy tile. On navy surfaces pass `onDark`
+ * to set it on a light tile so the edge stays visible.
  */
 export function Emblem({ className = 'h-12 w-12', onDark = false }) {
-  const img = <img src="/logo-256.png" alt="" width="256" height="256" className={onDark ? 'h-full w-full object-contain' : `${className} object-contain`} draggable="false" />;
+  const img = <img src="/logo.svg" alt="" width="64" height="64" className={onDark ? 'h-full w-full object-contain' : `${className} object-contain`} draggable="false" />;
   return onDark ? <span className={`${className} inline-flex shrink-0 items-center justify-center rounded-xl bg-white p-0.5 shadow-sm`}>{img}</span> : img;
 }
 
