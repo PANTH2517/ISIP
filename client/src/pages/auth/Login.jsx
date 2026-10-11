@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { KeyRound } from 'lucide-react';
 import api, { errMsg } from '../../api/client';
 import { firstName } from '../../utils/format';
 import { useAuth } from '../../context/AuthContext';
@@ -16,6 +17,20 @@ const DEMO = [
   { label: 'Admin', email: 'admin@isip.edu', password: 'Admin@123' },
 ];
 
+/**
+ * Temporary lab-demo logins for the live site, read from the VITE_DEMO_LOGINS build variable (set in Vercel, never
+ * committed): "email:password" pairs separated by commas. Remove the variable and redeploy to hide the button.
+ */
+function liveDemoLogins(raw = import.meta.env.VITE_DEMO_LOGINS) {
+  return String(raw || '').split(',').map((pair) => {
+    const [email, ...rest] = pair.trim().split(':');
+    const local = (email || '').split('@')[0] || '';
+    const role = local.includes('.') ? local.split('.').pop() : local;
+    return { label: role.charAt(0).toUpperCase() + role.slice(1), email: email?.trim(), password: rest.join(':').trim() };
+  }).filter((d) => d.email && d.password);
+}
+const LIVE_DEMO = liveDemoLogins();
+
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -26,6 +41,7 @@ export default function Login() {
   const [error, setError] = useState(params.get('expired') ? 'Your session expired. Please log in again.' : '');
   const [unverified, setUnverified] = useState(false);
   const [devLink, setDevLink] = useState(null);
+  const [showDemo, setShowDemo] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -84,6 +100,22 @@ export default function Login() {
               <Button key={d.label} type="button" size="sm" variant="soft" onClick={() => setForm({ email: d.email, password: d.password })}>{d.label}</Button>
             ))}
           </div>
+        </div>
+      )}
+
+      {LIVE_DEMO.length > 0 && (
+        <div className="mt-6 flex flex-col items-end">
+          <button type="button" onClick={() => setShowDemo((v) => !v)} title="Demo credentials" aria-label="Demo credentials" aria-expanded={showDemo}
+            className="flex h-6 w-6 items-center justify-center rounded-full text-slate-300 transition hover:bg-slate-100 hover:text-slate-500">
+            <KeyRound className="h-3.5 w-3.5" />
+          </button>
+          {showDemo && (
+            <div className="mt-2 flex w-full flex-wrap justify-end gap-2">
+              {LIVE_DEMO.map((d) => (
+                <Button key={d.email} type="button" size="sm" variant="soft" title={d.email} onClick={() => { setForm({ email: d.email, password: d.password }); setShowDemo(false); }}>{d.label}</Button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </AuthShell>
