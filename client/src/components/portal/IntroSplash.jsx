@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { BRAND } from '../../config/brand';
 
 const SEEN_KEY = 'isip_intro_seen';
+const REPLAY_EVENT = 'isip:replay-intro';
 const FADE_MS = 700;
-const MAX_MS = 12000; // never hold visitors longer than this, whatever the video does
+const MAX_MS = 15000; // never hold visitors longer than this, whatever the animation does
 
-/** Whether to play the intro: once per browser session, never for reduced-motion users or in tests. */
+/** Whether to play the intro on its own: once per browser session, never for reduced-motion users or in tests. */
 function shouldShow() {
   try {
     if (import.meta.env.MODE === 'test') return false;
@@ -17,12 +18,19 @@ function shouldShow() {
   }
 }
 
-/** Full-screen intro video shown the first time someone opens the public site in a session. */
-export default function IntroSplash() {
-  const [visible, setVisible] = useState(shouldShow);
+/** Plays the intro again (used by the small replay button in the masthead). */
+export function replayIntro() {
+  window.dispatchEvent(new Event(REPLAY_EVENT));
+}
+
+/**
+ * Full-screen animated intro (public/intro.html, drawn in code) shown the first time someone opens the home page
+ * in a session, and whenever replayIntro() is called.
+ */
+export default function IntroSplash({ auto = false }) {
+  const [visible, setVisible] = useState(() => auto && shouldShow());
   const [leaving, setLeaving] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const videoRef = useRef(null);
+  const [run, setRun] = useState(0); // remounts the frame so a replay starts from the beginning
 
   const finish = useCallback(() => {
     try { sessionStorage.setItem(SEEN_KEY, '1'); } catch { /* storage unavailable */ }
@@ -31,45 +39,39 @@ export default function IntroSplash() {
   }, []);
 
   useEffect(() => {
+    const onReplay = () => { setLeaving(false); setRun((n) => n + 1); setVisible(true); };
+    window.addEventListener(REPLAY_EVENT, onReplay);
+    return () => window.removeEventListener(REPLAY_EVENT, onReplay);
+  }, []);
+
+  useEffect(() => {
     if (!visible) return undefined;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const maxTimer = setTimeout(finish, MAX_MS);
     const onKey = (e) => { if (e.key === 'Escape') finish(); };
+    const onMessage = (e) => { if (e.origin === window.location.origin && e.data?.type === 'startin-intro-done') finish(); };
     window.addEventListener('keydown', onKey);
-    // Autoplay can be blocked (data saver, some browsers); if so, don't keep visitors waiting.
-    const played = videoRef.current?.play?.();
-    if (played && typeof played.catch === 'function') played.catch(finish);
+    window.addEventListener('message', onMessage);
     return () => {
       document.body.style.overflow = prevOverflow;
       clearTimeout(maxTimer);
       window.removeEventListener('keydown', onKey);
+      window.removeEventListener('message', onMessage);
     };
-  }, [visible, finish]);
+  }, [visible, run, finish]);
 
   if (!visible) return null;
 
   return (
     <div
-      className={`fixed inset-0 z-[100] bg-[#0a1b38] transition-opacity ease-out ${leaving ? 'opacity-0' : 'opacity-100'}`}
+      className={`fixed inset-0 z-[100] bg-[#050d1f] transition-opacity ease-out ${leaving ? 'opacity-0' : 'opacity-100'}`}
       style={{ transitionDuration: `${FADE_MS}ms` }}
       role="dialog"
       aria-modal="true"
       aria-label={`${BRAND.name} intro`}
     >
-      {/* Always show the whole frame at its own aspect ratio: nothing is cropped or zoomed. */}
-      <video
-        ref={videoRef}
-        className="absolute inset-0 h-full w-full object-contain"
-        src="/intro.mp4"
-        muted
-        playsInline
-        preload="auto"
-        aria-hidden="true"
-        onEnded={finish}
-        onError={finish}
-        onTimeUpdate={(e) => setProgress(e.currentTarget.duration ? e.currentTarget.currentTime / e.currentTarget.duration : 0)}
-      />
+      <iframe key={run} src="/intro.html?embed" title={`${BRAND.name} intro animation`} className="absolute inset-0 h-full w-full border-0" aria-hidden="true" tabIndex={-1} />
       <button
         type="button"
         onClick={finish}
@@ -78,9 +80,6 @@ export default function IntroSplash() {
       >
         Skip
       </button>
-      <div className="absolute inset-x-0 bottom-0 h-1 bg-white/10" aria-hidden="true">
-        <div className="h-full bg-gradient-to-r from-saffron-400 to-saffron-600 transition-[width] duration-200 ease-linear" style={{ width: `${Math.round(progress * 100)}%` }} />
-      </div>
     </div>
   );
 }

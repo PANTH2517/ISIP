@@ -5,7 +5,6 @@ import {
   Landmark, ClipboardList, ChevronDown, Users, BadgeCheck, Building2, Clock,
 } from 'lucide-react';
 import PublicLayout from '../components/portal/PublicLayout';
-import IntroSplash from '../components/portal/IntroSplash';
 import { useApi } from '../hooks/useApi';
 import { useAuth } from '../context/AuthContext';
 import { BRAND } from '../config/brand';
@@ -79,7 +78,6 @@ export default function Landing() {
 
   return (
     <PublicLayout>
-      <IntroSplash />
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-indigo-950 via-indigo-900 to-indigo-700">
         <div className="hero-pattern absolute inset-0" />

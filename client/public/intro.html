@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>StartIn intro</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; height: 100%; background: #050d1f; overflow: hidden; }
+  #bg { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #stage { position: fixed; left: 0; top: 0; width: 1600px; height: 900px; transform-origin: 0 0; pointer-events: none; }
+  .name { position: absolute; top: 380px; width: 100%; text-align: center; font: 800 160px/1 Poppins, sans-serif; letter-spacing: -3px; }
+  #title { color: #fff; }
+  #title span { display: inline-block; opacity: 0; text-shadow: 0 0 30px rgba(47, 211, 255, .5); }
+  #title span.in { color: #f26b1d; text-shadow: 0 0 32px rgba(242, 107, 29, .6); }
+  #shine { background: linear-gradient(105deg, transparent 42%, rgba(255,255,255,.95) 50%, transparent 58%); background-size: 260% 100%; background-position: 130% 0;
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  #sub { position: absolute; top: 580px; width: 100%; text-align: center; font: 600 31px/1 Poppins, sans-serif; letter-spacing: .34em; text-indent: .34em;
+    background: linear-gradient(100deg, #8fe6ff 0%, #8fe6ff 42%, #ffffff 50%, #8fe6ff 58%, #8fe6ff 100%); background-size: 300% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 12px rgba(47, 211, 255, .35)); clip-path: inset(0 50% 0 50%); }
+  #line { position: absolute; top: 640px; left: 480px; width: 640px; height: 3px; border-radius: 3px; opacity: 0;
+    background: linear-gradient(90deg, transparent, #2fd3ff 25%, #f26b1d 50%, #2fd3ff 75%, transparent); box-shadow: 0 0 18px #2fd3ff; }
+  #fade { position: fixed; inset: 0; background: #050d1f; pointer-events: none; }
+  #replay { position: fixed; right: 12px; bottom: 12px; font: 500 12px Poppins, sans-serif; color: rgba(255,255,255,.5); background: none; border: 1px solid rgba(255,255,255,.2); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  .embed #replay { display: none; }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div id="stage">
+  <div id="title" class="name"></div>
+  <div id="shine" class="name">StartIn</div>
+  <div id="sub">INTELLIGENT STARTUP INCUBATION PLATFORM</div>
+  <div id="line"></div>
+</div>
+<div id="fade"></div>
+<button id="replay" type="button">Replay</button>
+<script>
+/*
+ * StartIn intro, about 11.5 s, drawn frame by frame from a single clock so any moment can be rendered with seek(t).
+ *  1. The idea      light streams in and fuses into a seed, which falls and lands
+ *  2. Incubation    circuit roots spread, a circuit tree grows and leafs
+ *  3. Ecosystem     a ring forms; founder, mentor, investor and incubation cell join and exchange pulses
+ *  4. The journey   a rising path ignites the six portal milestones and bursts at the top
+ *  5. The name
+ */
+(() => {
+  const DUR = 11.5;
+  const embed = new URLSearchParams(location.search).has('embed');
+  if (embed) document.documentElement.className = 'embed';
+  const $ = (id) => document.getElementById(id);
+  const clamp = (v) => Math.max(0, Math.min(1, v));
+  const seg = (t, a, b) => clamp((t - a) / (b - a));
+  const lerp = (a, b, p) => a + (b - a) * p;
+  const easeOut = (p) => 1 - Math.pow(1 - p, 3);
+  const easeIn = (p) => p * p * p;
+  const easeInOut = (p) => (p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+  const back = (p) => { const c = 1.9; return p <= 0 ? 0 : 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); };
+  function rng(seed) { return () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let x = Math.imul(seed ^ (seed >>> 15), 1 | seed); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; }
+  const R = rng(11);
+
+  const CYAN = '143,243,255', TEAL = '124,245,208', BLUE = '76,201,255', ORANGE = '242,107,29', WHITE = '255,255,255';
+
+  // ---------- geometry helpers: every structure is a polyline that can be drawn partially
+  function quad(a, c, b, n = 22) { const pts = []; for (let i = 0; i <= n; i++) { const t = i / n, u = 1 - t; pts.push([u * u * a[0] + 2 * u * t * c[0] + t * t * b[0], u * u * a[1] + 2 * u * t * c[1] + t * t * b[1]]); } return pts; }
+  function poly(pts) { const L = [0]; for (let i = 1; i < pts.length; i++) L.push(L[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1])); return { pts, L, len: L[L.length - 1] }; }
+  function pointAt(P, p) {
+    const d = P.len * clamp(p); let i = 1; while (i < P.pts.length - 1 && P.L[i] < d) i++;
+    const a = P.pts[i - 1], b = P.pts[i], f = (d - P.L[i - 1]) / ((P.L[i] - P.L[i - 1]) || 1);
+    return [lerp(a[0], b[0], f), lerp(a[1], b[1], f), Math.atan2(b[1] - a[1], b[0] - a[0])];
+  }
+  function tracePartial(P, p) {
+    if (p <= 0) return false; const d = P.len * clamp(p);
+    ctx.beginPath(); ctx.moveTo(...P.pts[0]);
+    for (let i = 1; i < P.pts.length; i++) { if (P.L[i] <= d) ctx.lineTo(...P.pts[i]); else { const [x, y] = pointAt(P, p); ctx.lineTo(x, y); break; } }
+    return true;
+  }
+  // glowing stroke: a wide faint pass plus a thin bright core (drawn additively)
+  function glow(P, p, rgb, w, a = 1) {
+    if (!tracePartial(P, p)) return;
+    ctx.strokeStyle = `rgba(${rgb},${.18 * a})`; ctx.lineWidth = w * 4; ctx.stroke();
+    ctx.strokeStyle = `rgba(${rgb},${a})`; ctx.lineWidth = w; ctx.stroke();
+  }
+  function dot(x, y, r, rgb, a = 1) {
+    if (r <= 0 || a <= 0) return;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r * 3.2); g.addColorStop(0, `rgba(${rgb},${a * .55})`); g.addColorStop(1, `rgba(${rgb},0)`);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 3.2, 0, 7); ctx.fill();
+    ctx.fillStyle = `rgba(${WHITE},${a})`; ctx.beginPath(); ctx.arc(x, y, r * .55, 0, 7); ctx.fill();
+    ctx.fillStyle = `rgba(${rgb},${a})`; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.globalAlpha = .6; ctx.fill(); ctx.globalAlpha = 1;
+  }
+  function star4(x, y, s) { ctx.beginPath(); ctx.moveTo(x, y - s); ctx.quadraticCurveTo(x, y, x + s, y); ctx.quadraticCurveTo(x, y, x, y + s); ctx.quadraticCurveTo(x, y, x - s, y); ctx.quadraticCurveTo(x, y, x, y - s); ctx.fill(); }
+  function leaf(x, y, ang, s, a) {
+    if (s <= 0) return;
+    ctx.save(); ctx.globalCompositeOperation = 'source-over'; ctx.translate(x, y); ctx.rotate(ang); ctx.scale(s, s);
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.bezierCurveTo(8, -12, 26, -12, 34, 0); ctx.bezierCurveTo(26, 12, 8, 12, 0, 0);
+    ctx.fillStyle = `rgba(${ORANGE},${.25 * a})`; ctx.shadowColor = `rgba(${ORANGE},${a})`; ctx.shadowBlur = 18; ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = `rgba(255,138,61,${a})`; ctx.fill();
+    ctx.strokeStyle = `rgba(255,220,190,${.7 * a})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(3, 0); ctx.lineTo(30, 0); ctx.stroke();
+    ctx.restore();
+  }
+
+  // ---------- scene layout (world coordinates)
+  const GROUND = 560, SEED = [800, GROUND], HEART = [800, 400];
+  const roots = [
+    [[800, 560], [800, 598], [762, 628], [700, 628], [676, 652]],
+    [[800, 560], [822, 592], [872, 612], [924, 612], [944, 640]],
+    [[800, 560], [792, 612], [792, 668]],
+    [[800, 572], [742, 590], [628, 590]],
+    [[800, 572], [858, 584], [972, 584]],
+  ].map(poly);
+  const trunk = poly(quad([800, 560], [810, 440], [800, 300]));
+  const branches = [
+    { P: poly(quad([800, 470], [740, 440], [688, 352])), at: .2 },
+    { P: poly(quad([800, 445], [866, 420], [912, 338])), at: .3 },
+    { P: poly(quad([800, 385], [756, 340], [736, 262])), at: .5 },
+    { P: poly(quad([800, 362], [850, 320], [868, 250])), at: .6 },
+    { P: poly(quad([800, 300], [796, 260], [800, 214])), at: .85 },
+  ];
+  const twigs = [
+    [[803, 520], [770, 508], [770, 486]], [[805, 500], [836, 488], [836, 466]],
+    [[802, 420], [772, 410], [772, 392]], [[802, 400], [830, 390], [830, 372]],
+  ].map(poly);
+  const RING_R = 300;
+  const roles = [
+    { name: 'Founder', deg: -150, draw: drawFounder }, { name: 'Mentor', deg: -30, draw: drawMentor },
+    { name: 'Investor', deg: 30, draw: drawInvestor }, { name: 'Incubation Cell', deg: 150, draw: drawCell },
+  ].map((r) => ({ ...r, x: HEART[0] + Math.cos(r.deg * Math.PI / 180) * RING_R, y: HEART[1] + Math.sin(r.deg * Math.PI / 180) * RING_R }));
+  const J = poly([[230, 770], [410, 650], [560, 690], [740, 528], [905, 566], [1080, 372], [1255, 236], [1395, 112]]);
+  const STEPS = ['Register', 'Submit idea', 'Verified', 'Mentored', 'Funded', 'Incubated'];
+  const stepAt = STEPS.map((_, i) => J.L[i + 1] / J.len);
+
+  // ---------- role icons (centred on 0,0; ~36px across)
+  function iconStroke(rgb, a) { ctx.strokeStyle = `rgba(${rgb},${a})`; ctx.lineWidth = 3.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; }
+  function person(a, rgb) { iconStroke(rgb, a); ctx.beginPath(); ctx.arc(0, -6, 8, 0, 7); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-16, 20); ctx.quadraticCurveTo(-15, 5, 0, 5); ctx.quadraticCurveTo(15, 5, 16, 20); ctx.stroke(); }
+  function drawFounder(a) { person(a, CYAN); ctx.fillStyle = `rgba(${ORANGE},${a})`; star4(15, -19, 7); }
+  function drawMentor(a) {
+    person(a, CYAN); iconStroke(ORANGE, a);
+    ctx.beginPath(); ctx.moveTo(-15, -17); ctx.lineTo(0, -24); ctx.lineTo(15, -17); ctx.lineTo(0, -10); ctx.closePath(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(15, -17); ctx.lineTo(15, -8); ctx.stroke();
+  }
+  function drawInvestor(a) {
+    iconStroke(CYAN, a);
+    for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.ellipse(-6, 14 - i * 9, 12, 4.5, 0, 0, 7); ctx.stroke(); }
+    iconStroke(ORANGE, a); ctx.beginPath(); ctx.moveTo(8, 8); ctx.lineTo(15, -4); ctx.lineTo(20, 2); ctx.lineTo(24, -16); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(18, -16); ctx.lineTo(24, -16); ctx.lineTo(24, -10); ctx.stroke();
+  }
+  function drawCell(a) {
+    iconStroke(CYAN, a);
+    ctx.beginPath(); ctx.moveTo(-20, -8); ctx.lineTo(0, -21); ctx.lineTo(20, -8); ctx.closePath(); ctx.stroke();
+    [-12, 0, 12].forEach((x) => { ctx.beginPath(); ctx.moveTo(x, -3); ctx.lineTo(x, 14); ctx.stroke(); });
+    ctx.beginPath(); ctx.moveTo(-21, 20); ctx.lineTo(21, 20); ctx.stroke();
+    ctx.fillStyle = `rgba(${ORANGE},${a})`; ctx.beginPath(); ctx.arc(0, -11, 3, 0, 7); ctx.fill();
+  }
+
+  // ---------- particles (deterministic)
+  const dust = Array.from({ length: 180 }, () => ({ x: R(), y: R(), r: .4 + R() * 1.6, vx: (R() - .5) * .006, vy: -.002 - R() * .01, w: 1 + R() * 3, ph: R() * 6.3, c: R() < .12 ? ORANGE : (R() < .5 ? CYAN : WHITE) }));
+  const conv = Array.from({ length: 120 }, () => ({ a: R() * Math.PI * 2, d: 420 + R() * 700, dl: R() * .5, c: R() < .25 ? ORANGE : CYAN }));
+  const burst = Array.from({ length: 110 }, () => ({ a: R() * Math.PI * 2, s: 90 + R() * 420, r: .8 + R() * 2.4, c: R() < .35 ? ORANGE : CYAN }));
+  const sparkles = Array.from({ length: 16 }, () => ({ x: 120 + R() * 1360, y: 80 + R() * 700, s: 6 + R() * 12, ph: R() * 6.3, w: 1.2 + R() * 2 }));
+  const nets = [[.06, .2], [.93, .24], [.08, .84], [.92, .82]].map(([cx, cy], k) => { const r2 = rng(100 + k); return Array.from({ length: 7 }, () => ({ x: cx + (r2() - .5) * .16, y: cy + (r2() - .5) * .22, ph: r2() * 6.3 })); });
+
+  // ---------- camera keyframes: [time, centreX, centreY, zoom]
+  const CAM = [[0, 800, 390, 1.65], [1.5, 800, 400, 1.35], [2.3, 800, 520, 1.3], [4.6, 800, 420, 1.0], [6.8, 800, 400, .95], [9.0, 810, 440, .8], [DUR, 810, 430, .76]];
+  function camera(t) {
+    let i = 1; while (i < CAM.length - 1 && CAM[i][0] < t) i++;
+    const a = CAM[i - 1], b = CAM[i], p = easeInOut(seg(t, a[0], b[0]));
+    return [lerp(a[1], b[1], p), lerp(a[2], b[2], p), lerp(a[3], b[3], p)];
+  }
+
+  const cv = $('bg'), ctx = cv.getContext('2d');
+  let W = 0, H = 0, S = 1, OX = 0, OY = 0, DPR = 1;
+  function layout() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR;
+    S = Math.min(W / 1600, H / 900); OX = (W - 1600 * S) / 2; OY = (H - 900 * S) / 2;
+    $('stage').style.transform = `translate(${OX}px, ${OY}px) scale(${S})`;
+  }
+
+  function background(t) {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.globalCompositeOperation = 'source-over';
+    const g = ctx.createRadialGradient(W / 2, H * .45, 0, W / 2, H * .45, Math.max(W, H) * .75);
+    g.addColorStop(0, '#13336a'); g.addColorStop(.5, '#0a1b38'); g.addColorStop(1, '#040b1a');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const gs = 64 * Math.max(S, .5), off = (t * 6) % gs;
+    ctx.strokeStyle = 'rgba(120,180,255,0.05)'; ctx.lineWidth = 1; ctx.beginPath();
+    for (let x = -off; x < W; x += gs) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+    for (let y = -off; y < H; y += gs) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+    ctx.stroke();
+    const na = .35 * easeOut(seg(t, .3, 2));
+    nets.forEach((pts) => {
+      const P = pts.map((p) => [(p.x + Math.sin(t * .4 + p.ph) * .004) * W, (p.y + Math.cos(t * .35 + p.ph) * .004) * H]);
+      ctx.strokeStyle = `rgba(120,200,255,${na * .45})`; ctx.beginPath();
+      for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) if (Math.hypot(P[i][0] - P[j][0], P[i][1] - P[j][1]) < Math.min(W, H) * .2) { ctx.moveTo(...P[i]); ctx.lineTo(...P[j]); }
+      ctx.stroke(); ctx.fillStyle = `rgba(${CYAN},${na})`;
+      P.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 2.2, 0, 7); ctx.fill(); });
+    });
+    const da = easeOut(seg(t, 0, 1.5));
+    dust.forEach((s) => {
+      const x = ((s.x + s.vx * t) % 1 + 1) % 1 * W, y = ((s.y + s.vy * t) % 1 + 1) % 1 * H;
+      ctx.fillStyle = `rgba(${s.c},${da * (.25 + .75 * Math.abs(Math.sin(t * s.w + s.ph)))})`; ctx.beginPath(); ctx.arc(x, y, s.r, 0, 7); ctx.fill();
+    });
+  }
+
+  function scene(t) {
+    const [cx, cy, k] = camera(t);
+    ctx.setTransform(DPR * S * k, 0, 0, DPR * S * k, DPR * (OX + S * (800 - cx * k)), DPR * (OY + S * (450 - cy * k)));
+    ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+
+    // 1. THE IDEA: streaks fuse into a seed of light, which falls to the ground
+    conv.forEach((c) => {
+      const p = seg(t, c.dl, c.dl + .95); if (p <= 0 || p >= 1) return;
+      const e = easeIn(p), e0 = easeIn(Math.max(0, p - .1)), dx = Math.cos(c.a) * c.d, dy = Math.sin(c.a) * c.d;
+      ctx.strokeStyle = `rgba(${c.c},${.25 + .75 * p})`; ctx.lineWidth = 2.4; ctx.beginPath();
+      ctx.moveTo(HEART[0] + dx * (1 - e0), HEART[1] + dy * (1 - e0)); ctx.lineTo(HEART[0] + dx * (1 - e), HEART[1] + dy * (1 - e)); ctx.stroke();
+    });
+    const sg = easeOut(seg(t, .95, 1.4)), fall = easeIn(seg(t, 1.55, 2.05));
+    const seedY = lerp(HEART[1], GROUND, fall), seedA = sg * (1 - seg(t, 3.2, 3.8));
+    if (seedA > 0) {
+      if (fall > 0 && fall < 1) { ctx.strokeStyle = `rgba(${CYAN},.5)`; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(800, Math.max(HEART[1], seedY - 120)); ctx.lineTo(800, seedY); ctx.stroke(); }
+      dot(800, seedY, 10 + 8 * (1 - fall), WHITE, seedA); dot(800, seedY, 16, CYAN, seedA * .8);
+      ctx.fillStyle = `rgba(${WHITE},${seedA * (1 - fall)})`; star4(800, seedY, 30 + 34 * sg);
+    }
+    // impact: ground line spreads out, ripples run along it
+    const gp = easeOut(seg(t, 2.05, 2.9)), sceneA = 1 - .78 * seg(t, 6.8, 7.4) - .07 * seg(t, 8.9, 9.5);
+    if (gp > 0) {
+      const half = 680 * gp, lg = ctx.createLinearGradient(800 - half, 0, 800 + half, 0);
+      lg.addColorStop(0, `rgba(${BLUE},0)`); lg.addColorStop(.5, `rgba(${CYAN},${.9 * sceneA})`); lg.addColorStop(1, `rgba(${BLUE},0)`);
+      ctx.fillStyle = lg; ctx.fillRect(800 - half, GROUND - 1.5, half * 2, 3);
+      [2.05, 2.25].forEach((a0) => { const q = seg(t, a0, a0 + .9); if (q <= 0 || q >= 1) return; ctx.strokeStyle = `rgba(${CYAN},${(1 - q) * .8})`; ctx.lineWidth = 3 * (1 - q) + .5; ctx.beginPath(); ctx.ellipse(800, GROUND, 40 + 420 * easeOut(q), 10 + 60 * easeOut(q), 0, 0, 7); ctx.stroke(); });
+    }
+
+    // 2. INCUBATION: circuit roots, then a circuit tree with orange leaves
+    roots.forEach((P, i) => { const p = easeOut(seg(t, 2.2 + i * .1, 3.1 + i * .1)); glow(P, p, BLUE, 2.4, .8 * sceneA); if (p >= 1) { const e = P.pts[P.pts.length - 1]; dot(e[0], e[1], 3.5 * back(seg(t, 3.1 + i * .1, 3.4 + i * .1)), TEAL, sceneA); } });
+    const tp = easeInOut(seg(t, 2.6, 3.7));
+    glow(trunk, tp, TEAL, 7, sceneA);
+    twigs.forEach((P, i) => { const p = easeOut(seg(t, 3.3 + i * .1, 3.8 + i * .1)); glow(P, p, TEAL, 2.2, .85 * sceneA); if (p >= 1) { const e = P.pts[P.pts.length - 1]; dot(e[0], e[1], 3 * back(seg(t, 3.8 + i * .1, 4.1 + i * .1)), CYAN, sceneA); } });
+    branches.forEach((b, i) => {
+      const st = 3.0 + b.at * 1.0, p = easeOut(seg(t, st, st + .8));
+      glow(b.P, p, TEAL, 4, sceneA);
+      const [x, y, ang] = pointAt(b.P, 1), ls = back(seg(t, st + .7, st + 1.15));
+      if (ls > 0) { leaf(x, y, ang - .55, ls * 1.3, sceneA); leaf(x, y, ang + .55, ls * 1.1, sceneA); dot(x, y, 4.5 * ls, CYAN, sceneA); }
+    });
+    // heartbeat glow in the tree once it's alive
+    const alive = seg(t, 4.1, 4.6);
+    if (alive > 0) { const pulse = .5 + .5 * Math.sin(t * 3.4); const g = ctx.createRadialGradient(800, 380, 0, 800, 380, 210); g.addColorStop(0, `rgba(${CYAN},${.16 * alive * (.7 + .3 * pulse) * sceneA})`); g.addColorStop(1, `rgba(${CYAN},0)`); ctx.fillStyle = g; ctx.fillRect(590, 170, 420, 420); }
+    // sap rising up the trunk and branches
+    if (alive > 0) for (let n = 0; n < 3; n++) { const q = ((t * .55) + n / 3) % 1; const [x, y] = pointAt(trunk, q); dot(x, y, 3.2, WHITE, alive * sceneA * Math.sin(q * Math.PI)); }
+
+    // 3. ECOSYSTEM: a ring forms, four roles join and exchange pulses
+    const rp = easeInOut(seg(t, 4.5, 5.4));
+    if (rp > 0) {
+      ctx.strokeStyle = `rgba(${CYAN},${.16 * sceneA})`; ctx.lineWidth = 12; ctx.beginPath(); ctx.arc(HEART[0], HEART[1], RING_R, -Math.PI / 2, -Math.PI / 2 + rp * Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = `rgba(${CYAN},${.75 * sceneA})`; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.setLineDash([4, 14]); ctx.lineDashOffset = -t * 40; ctx.strokeStyle = `rgba(${BLUE},${.45 * rp * sceneA})`; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(HEART[0], HEART[1], RING_R + 22, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+      const head = -Math.PI / 2 + rp * Math.PI * 2; if (rp < 1) dot(HEART[0] + Math.cos(head) * RING_R, HEART[1] + Math.sin(head) * RING_R, 6, WHITE, sceneA);
+    }
+    roles.forEach((r, i) => {
+      const fp = easeInOut(seg(t, 4.9 + i * .12, 5.55 + i * .12));
+      if (fp > 0 && fp < 1) { const x = lerp(HEART[0], r.x, fp), y = lerp(HEART[1], r.y, fp) - Math.sin(fp * Math.PI) * 60; dot(x, y, 7, i === 0 ? ORANGE : CYAN, sceneA); }
+      const ip = back(seg(t, 5.45 + i * .12, 5.95 + i * .12));
+      if (ip <= 0) return;
+      const a = Math.min(1, ip) * sceneA;
+      // links to the heart of the tree, with pulses travelling both ways
+      ctx.setLineDash([3, 9]); ctx.strokeStyle = `rgba(${CYAN},${.35 * a})`; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(HEART[0], HEART[1]); ctx.stroke(); ctx.setLineDash([]);
+      const q = (t * .5 + i * .27) % 1; dot(lerp(r.x, HEART[0], q), lerp(r.y, HEART[1], q), 3.4, i % 2 ? ORANGE : CYAN, a * Math.sin(q * Math.PI));
+      ctx.save(); ctx.translate(r.x, r.y + Math.sin(t * 1.4 + i) * 4); ctx.scale(ip, ip);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = `rgba(8,22,48,${.92 * a})`; ctx.beginPath(); ctx.arc(0, 0, 46, 0, 7); ctx.fill();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.strokeStyle = `rgba(${i === 0 ? ORANGE : CYAN},${.2 * a})`; ctx.lineWidth = 12; ctx.beginPath(); ctx.arc(0, 0, 46, 0, 7); ctx.stroke();
+      ctx.strokeStyle = `rgba(${i === 0 ? ORANGE : CYAN},${a})`; ctx.lineWidth = 2.5; ctx.stroke();
+      r.draw(a);
+      ctx.restore();
+      const la = seg(t, 5.8 + i * .12, 6.2 + i * .12) * (1 - seg(t, 6.8, 7.1));
+      if (la > 0) { ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = `rgba(207,240,255,${la})`; ctx.font = '600 22px Poppins, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(r.name, r.x, r.y + 80); ctx.globalCompositeOperation = 'lighter'; }
+    });
+    // pulses chasing round the ring
+    if (rp >= 1) for (let n = 0; n < 4; n++) { const ang = t * .9 + n * Math.PI / 2; dot(HEART[0] + Math.cos(ang) * RING_R, HEART[1] + Math.sin(ang) * RING_R, 4, n % 2 ? ORANGE : WHITE, sceneA); }
+
+    // 4. THE JOURNEY: a rising path ignites the six milestones and bursts at the top
+    const jp = easeInOut(seg(t, 7.0, 8.9)), jA = 1 - .62 * seg(t, 9.0, 9.6);
+    if (jp > 0) {
+      const lg = ctx.createLinearGradient(J.pts[0][0], J.pts[0][1], 1395, 112);
+      lg.addColorStop(0, `rgba(${CYAN},${jA})`); lg.addColorStop(.6, `rgba(${TEAL},${jA})`); lg.addColorStop(1, `rgba(${ORANGE},${jA})`);
+      if (tracePartial(J, jp)) { ctx.strokeStyle = `rgba(${CYAN},${.18 * jA})`; ctx.lineWidth = 22; ctx.stroke(); ctx.strokeStyle = lg; ctx.lineWidth = 5; ctx.stroke(); }
+      STEPS.forEach((name, i) => {
+        if (jp < stepAt[i]) return;
+        const since = (jp - stepAt[i]) * 1.9, s = back(clamp(since / .12)), [x, y] = J.pts[i + 1], col = i === 5 ? ORANGE : CYAN;
+        const q = clamp(since / .25); if (q < 1) { ctx.strokeStyle = `rgba(${col},${(1 - q) * jA})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, 14 + 50 * q, 0, 7); ctx.stroke(); }
+        ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = `rgba(8,22,48,${jA})`; ctx.beginPath(); ctx.arc(x, y, 17 * s, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'lighter';
+        ctx.strokeStyle = `rgba(${col},${jA})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, 17 * s, 0, 7); ctx.stroke();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = `rgba(255,255,255,${jA * clamp(since / .1)})`; ctx.font = '700 17px Poppins, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(i + 1), x, y + 1);
+        const above = i % 2 === 1, ly = y + (above ? -46 : 50), la = jA * clamp((since - .05) / .15);
+        ctx.font = '600 22px Poppins, sans-serif'; const tw = ctx.measureText(name).width + 24;
+        ctx.fillStyle = `rgba(8,22,48,${.85 * la})`; ctx.beginPath(); ctx.roundRect(x - tw / 2, ly - 17, tw, 34, 17); ctx.fill();
+        ctx.strokeStyle = `rgba(${col},${.5 * la})`; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.fillStyle = `rgba(${i === 5 ? '255,170,120' : '207,240,255'},${la})`; ctx.fillText(name, x, ly + 1);
+        ctx.textBaseline = 'alphabetic'; ctx.globalCompositeOperation = 'lighter';
+      });
+      if (jp < 1) { const [x, y, ang] = pointAt(J, jp); dot(x, y, 9, WHITE, 1); for (let n = 1; n <= 6; n++) { const [tx, ty] = pointAt(J, jp - n * .012); dot(tx, ty, 6 - n * .7, CYAN, .7 - n * .1); } ctx.fillStyle = `rgba(${WHITE},.9)`; star4(x, y, 22); void ang; }
+      else {
+        const [x, y] = J.pts[J.pts.length - 1], bp = seg(t, 8.9, 10.2);
+        ctx.fillStyle = `rgba(${ORANGE},${jA})`; ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(112 - 236, 1395 - 1255)); ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(-12, -14); ctx.lineTo(-12, 14); ctx.closePath(); ctx.fill(); ctx.restore();
+        if (bp > 0 && bp < 1) {
+          const e = easeOut(bp);
+          burst.forEach((b) => { const d = b.s * e; ctx.fillStyle = `rgba(${b.c},${(1 - bp) * .9})`; ctx.beginPath(); ctx.arc(x + Math.cos(b.a) * d, y + Math.sin(b.a) * d, b.r * 1.6, 0, 7); ctx.fill(); });
+          [0, .12].forEach((o) => { const q = clamp((bp - o) / .7); if (q <= 0 || q >= 1) return; ctx.strokeStyle = `rgba(${o ? ORANGE : CYAN},${(1 - q) * .9})`; ctx.lineWidth = 6 * (1 - q) + .5; ctx.beginPath(); ctx.arc(x, y, 20 + 300 * easeOut(q), 0, 7); ctx.stroke(); });
+        }
+      }
+    }
+    // twinkles once the world is alive
+    const sa = easeOut(seg(t, 4.4, 5.4));
+    sparkles.forEach((sp) => { const a = sa * Math.max(0, Math.sin(t * sp.w + sp.ph)); if (a > 0) { ctx.fillStyle = `rgba(220,250,255,${a * .8})`; star4(sp.x, sp.y, sp.s * (.6 + .4 * a)); } });
+    ctx.globalCompositeOperation = 'source-over';
+
+    // 5. THE NAME: darken the middle so the title reads clearly
+    const vg = seg(t, 8.9, 9.6);
+    if (vg > 0) {
+      ctx.setTransform(DPR * S, 0, 0, DPR * S, DPR * OX, DPR * OY);
+      const g = ctx.createRadialGradient(800, 500, 0, 800, 500, 620); g.addColorStop(0, `rgba(5,13,31,${.78 * vg})`); g.addColorStop(1, 'rgba(5,13,31,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 1600, 900);
+    }
+  }
+
+  const title = $('title');
+  'StartIn'.split('').forEach((ch, i) => { const s = document.createElement('span'); s.textContent = ch; if (i >= 5) s.className = 'in'; title.appendChild(s); });
+  const letters = [...title.children];
+
+  function render(t) {
+    background(t);
+    scene(t);
+    letters.forEach((s, i) => {
+      const p = easeOut(seg(t, 9.15 + i * .07, 9.75 + i * .07));
+      s.style.opacity = p; s.style.transform = `translateY(${(1 - p) * 70}px) scale(${.88 + .12 * p})`; s.style.filter = `blur(${(1 - p) * 12}px)`;
+    });
+    const sp = easeOut(seg(t, 9.7, 10.5)), sub = $('sub');
+    sub.style.clipPath = `inset(0 ${(1 - sp) * 50}% 0 ${(1 - sp) * 50}%)`;
+    sub.style.backgroundPosition = `${100 - 100 * easeInOut(seg(t, 10.2, 11.2))}% 0`;
+    $('line').style.transform = `scaleX(${easeOut(seg(t, 9.95, 10.8))})`; $('line').style.opacity = seg(t, 9.95, 10.05);
+    $('shine').style.backgroundPosition = `${130 - 160 * easeInOut(seg(t, 10.3, 11.1))}% 0`;
+    $('fade').style.opacity = Math.max(1 - seg(t, 0, .35), seg(t, DUR - .45, DUR));
+  }
+
+  let start = 0, raf = 0, done = false;
+  function finish() { if (done) return; done = true; if (embed && parent !== window) parent.postMessage({ type: 'startin-intro-done' }, location.origin); }
+  function frame(now) { const t = (now - start) / 1000; render(Math.min(t, DUR)); if (t < DUR) raf = requestAnimationFrame(frame); else finish(); }
+  function play() { cancelAnimationFrame(raf); done = false; start = performance.now(); raf = requestAnimationFrame(frame); }
+  window.seek = (t) => { cancelAnimationFrame(raf); render(t); };
+  $('replay').onclick = play;
+  addEventListener('resize', layout);
+  layout(); render(0);
+  const still = new URLSearchParams(location.search).get('t'); // ?t=5.2 renders a single frame (for reviewing)
+  if (still !== null) { document.fonts?.ready.then(() => render(+still)); return; }
+  // Wait briefly for the font so labels don't swap mid-animation, but never block on it.
+  Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), new Promise((r) => setTimeout(r, 1200))]).then(play);
+})();
+</script>
+</body>
+</html>
