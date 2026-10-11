@@ -20,6 +20,9 @@
     -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 12px rgba(47, 211, 255, .35)); clip-path: inset(0 50% 0 50%); }
   #line { position: absolute; top: 640px; left: 480px; width: 640px; height: 3px; border-radius: 3px; opacity: 0;
     background: linear-gradient(90deg, transparent, #2fd3ff 25%, #f26b1d 50%, #2fd3ff 75%, transparent); box-shadow: 0 0 18px #2fd3ff; }
+  #cap { position: absolute; top: 800px; width: 100%; text-align: center; font: 500 30px/1.2 Poppins, sans-serif; letter-spacing: .02em; color: #cfefff;
+    text-shadow: 0 0 18px rgba(47, 211, 255, .45), 0 2px 10px rgba(5, 13, 31, .9); opacity: 0; }
+  #cap b { color: #ffb27d; font-weight: 600; }
   #fade { position: fixed; inset: 0; background: #050d1f; pointer-events: none; }
   #replay { position: fixed; right: 12px; bottom: 12px; font: 500 12px Poppins, sans-serif; color: rgba(255,255,255,.5); background: none; border: 1px solid rgba(255,255,255,.2); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
   .embed #replay { display: none; }
@@ -32,6 +35,7 @@
   <div id="shine" class="name">StartIn</div>
   <div id="sub">INTELLIGENT STARTUP INCUBATION PLATFORM</div>
   <div id="line"></div>
+  <div id="cap"></div>
 </div>
 <div id="fade"></div>
 <button id="replay" type="button">Replay</button>
@@ -45,7 +49,7 @@
  *  5. The name
  */
 (() => {
-  const DUR = 16.5;
+  const DUR = 18;
   const embed = new URLSearchParams(location.search).has('embed');
   if (embed) document.documentElement.className = 'embed';
   const $ = (id) => document.getElementById(id);
@@ -195,6 +199,7 @@
   const dust = Array.from({ length: 180 }, () => ({ x: R(), y: R(), r: .4 + R() * 1.6, vx: (R() - .5) * .006, vy: -.002 - R() * .01, w: 1 + R() * 3, ph: R() * 6.3, c: R() < .12 ? ORANGE : (R() < .5 ? CYAN : WHITE) }));
   const conv = Array.from({ length: 120 }, () => ({ a: R() * Math.PI * 2, d: 420 + R() * 700, dl: R() * .5, c: R() < .25 ? ORANGE : CYAN }));
   const burst = Array.from({ length: 110 }, () => ({ a: R() * Math.PI * 2, s: 90 + R() * 420, r: .8 + R() * 2.4, c: R() < .35 ? ORANGE : CYAN }));
+  const flies = Array.from({ length: 26 }, () => ({ a: R() * 6.3, r: 90 + R() * 190, w: (.15 + R() * .3) * (R() < .5 ? -1 : 1), ph: R() * 6.3, c: R() < .3 ? ORANGE : (R() < .5 ? TEAL : CYAN) }));
   const sparkles = Array.from({ length: 16 }, () => ({ x: 120 + R() * 1360, y: 80 + R() * 700, s: 6 + R() * 12, ph: R() * 6.3, w: 1.2 + R() * 2 }));
   const nets = [[.06, .2], [.93, .24], [.08, .84], [.92, .82]].map(([cx, cy], k) => { const r2 = rng(100 + k); return Array.from({ length: 7 }, () => ({ x: cx + (r2() - .5) * .16, y: cy + (r2() - .5) * .22, ph: r2() * 6.3 })); });
 
@@ -245,6 +250,13 @@
       const x = ((s.x + s.vx * t) % 1 + 1) % 1 * W, y = ((s.y + s.vy * t) % 1 + 1) % 1 * H;
       ctx.fillStyle = `rgba(${s.c},${da * (.25 + .75 * Math.abs(Math.sin(t * s.w + s.ph)))})`; ctx.beginPath(); ctx.arc(x, y, s.r, 0, 7); ctx.fill();
     });
+    [[2.8, .78, .06], [6.2, .3, .1], [9.4, .92, .18], [12.6, .55, .04], [15.6, .2, .12]].forEach(([t0, sx, sy]) => {
+      const q = seg(t, t0, t0 + .9); if (q <= 0 || q >= 1) return;
+      const L = Math.min(W, H) * .5, x = (sx - .32 * easeOut(q)) * W, y = (sy + .3 * easeOut(q)) * H, a = Math.sin(q * Math.PI);
+      const g = ctx.createLinearGradient(x, y, x + L * .55, y - L * .5); g.addColorStop(0, `rgba(255,255,255,${a})`); g.addColorStop(1, 'rgba(143,243,255,0)');
+      ctx.strokeStyle = g; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + L * .55, y - L * .5); ctx.stroke();
+      ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.beginPath(); ctx.arc(x, y, 2.4, 0, 7); ctx.fill();
+    });
   }
 
   function scene(t) {
@@ -292,6 +304,10 @@
     // sap rising up the trunk and branches
     if (alive > 0) for (let n = 0; n < 3; n++) { const q = ((t * .55) + n / 3) % 1; const [x, y] = pointAt(trunk, q); dot(x, y, 3.2, WHITE, alive * sceneA * Math.sin(q * Math.PI)); }
 
+    // fireflies drift around the living tree
+    const ff = seg(t, 4.0, 5.0) * sceneA;
+    if (ff > 0) flies.forEach((f) => { const an = f.a + t * f.w; dot(800 + Math.cos(an) * f.r, 360 + Math.sin(an) * f.r * .62 + Math.sin(t * 1.8 + f.ph) * 12, 2.4, f.c, ff * (.35 + .65 * Math.abs(Math.sin(t * 2.4 + f.ph)))); });
+
     // 3. ECOSYSTEM: a ring forms, four roles join and exchange pulses
     const rp = easeInOut(seg(t, 4.5, 5.4));
     if (rp > 0) {
@@ -321,6 +337,13 @@
       const la = seg(t, 5.8 + i * .12, 6.2 + i * .12) * (1 - seg(t, 7.3, 7.6));
       if (la > 0) { ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = `rgba(207,240,255,${la})`; ctx.font = '600 22px Poppins, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(r.name, r.x, r.y + 80); ctx.globalCompositeOperation = 'lighter'; }
     });
+    // each role is linked to the next, and pulses travel between them
+    const rl = seg(t, 6.1, 6.6) * sceneA;
+    if (rl > 0) roles.forEach((r, i) => {
+      const n = roles[(i + 1) % 4], c = [lerp((r.x + n.x) / 2, HEART[0], .55), lerp((r.y + n.y) / 2, HEART[1], .55)], P = poly(quad([r.x, r.y], c, [n.x, n.y], 18));
+      ctx.setLineDash([2, 8]); tracePartial(P, 1); ctx.strokeStyle = `rgba(${TEAL},${.4 * rl})`; ctx.lineWidth = 1.6; ctx.stroke(); ctx.setLineDash([]);
+      const q = (t * .45 + i * .25) % 1, [x, y] = pointAt(P, q); dot(x, y, 3.2, i % 2 ? CYAN : ORANGE, rl * Math.sin(q * Math.PI));
+    });
     // pulses chasing round the ring
     if (rp >= 1) for (let n = 0; n < 4; n++) { const ang = t * .9 + n * Math.PI / 2; dot(HEART[0] + Math.cos(ang) * RING_R, HEART[1] + Math.sin(ang) * RING_R, 4, n % 2 ? ORANGE : WHITE, sceneA); }
 
@@ -331,6 +354,14 @@
       ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = `rgba(207,240,255,${j0 * jA})`; ctx.font = '600 20px Poppins, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Your idea', sx, sy + 44); ctx.globalCompositeOperation = 'lighter';
     }
     if (jp > 0) {
+      // a growth bar rises under every milestone already reached
+      STEPS.forEach((_, i) => {
+        const since = t - arrive[i]; if (since < 0) return;
+        const [x, y] = J.pts[JC.idx[i + 1]], top = lerp(1000, y + 40, easeOut(seg(since, 0, .7)));
+        const bg = ctx.createLinearGradient(0, top, 0, 1000); bg.addColorStop(0, `rgba(${i === 5 ? ORANGE : TEAL},${.24 * jA})`); bg.addColorStop(1, `rgba(${BLUE},0)`);
+        ctx.fillStyle = bg; ctx.fillRect(x - 16, top, 32, 1000 - top);
+        ctx.fillStyle = `rgba(${i === 5 ? ORANGE : CYAN},${.8 * jA})`; ctx.fillRect(x - 16, top, 32, 2.5);
+      });
       // growth-chart glow under the path
       if (tracePartial(J, jp)) {
         const [ex] = pointAt(J, jp); ctx.lineTo(ex, 1100); ctx.lineTo(J.pts[0][0], 1100); ctx.closePath();
@@ -406,7 +437,36 @@
       ctx.setTransform(DPR * S, 0, 0, DPR * S, DPR * OX, DPR * OY);
       const g = ctx.createRadialGradient(800, 500, 0, 800, 500, 620); g.addColorStop(0, `rgba(5,13,31,${.78 * vg})`); g.addColorStop(1, 'rgba(5,13,31,0)');
       ctx.fillStyle = g; ctx.fillRect(0, 0, 1600, 900);
+      ctx.globalCompositeOperation = 'lighter';
+      const ra = seg(t, JEND + 1.1, JEND + 2.2);
+      if (ra > 0) for (let n = 0; n < 14; n++) {
+        const an = n / 14 * Math.PI * 2 + t * .12, w = .07;
+        const rg = ctx.createRadialGradient(800, 470, 60, 800, 470, 760); rg.addColorStop(0, `rgba(${n % 3 ? CYAN : ORANGE},${.07 * ra})`); rg.addColorStop(1, 'rgba(47,211,255,0)');
+        ctx.fillStyle = rg; ctx.beginPath(); ctx.moveTo(800, 470); ctx.arc(800, 470, 760, an - w, an + w); ctx.closePath(); ctx.fill();
+      }
+      const oa = seg(t, JEND + 1.6, JEND + 2.4);
+      if (oa > 0) for (let n = 0; n < 34; n++) {
+        const an = n / 34 * Math.PI * 2 + t * .35, x = 800 + Math.cos(an) * 560, y = 500 + Math.sin(an) * 190, front = Math.sin(an) > 0;
+        dot(x, y, front ? 2.6 : 1.6, n % 5 ? CYAN : ORANGE, oa * (front ? .9 : .35) * (.5 + .5 * Math.sin(t * 4 + n)));
+      }
+      ctx.globalCompositeOperation = 'source-over';
     }
+  }
+
+  const CAPTIONS = [
+    [.5, 2.3, 'Every great startup begins with an <b>idea</b>'],
+    [2.6, 4.5, 'nurtured until it takes <b>root</b> and grows'],
+    [4.9, 7.3, 'surrounded by the <b>people</b> who help it thrive'],
+    [7.8, 10.6, 'guided forward, one <b>milestone</b> at a time', 1],
+    [10.9, 13.3, 'until it is ready for the <b>world</b>', 1],
+  ];
+  let capShown = -1;
+  function captions(t) {
+    const cap = $('cap'), i = CAPTIONS.findIndex(([a, b]) => t >= a && t < b);
+    if (i !== capShown) { capShown = i; if (i >= 0) { cap.innerHTML = CAPTIONS[i][2]; cap.style.top = CAPTIONS[i][3] ? '56px' : '800px'; } } // journey captions sit at the top, clear of the cards
+    if (i < 0) { cap.style.opacity = 0; return; }
+    const [a, b] = CAPTIONS[i], v = Math.min(seg(t, a, a + .45), 1 - seg(t, b - .4, b));
+    cap.style.opacity = v; cap.style.transform = `translateY(${(1 - easeOut(seg(t, a, a + .5))) * 14}px)`; cap.style.filter = `blur(${(1 - v) * 4}px)`;
   }
 
   const title = $('title');
@@ -425,6 +485,7 @@
     sub.style.backgroundPosition = `${100 - 100 * easeInOut(seg(t, JEND + 2.0, JEND + 3.0))}% 0`;
     $('line').style.transform = `scaleX(${easeOut(seg(t, JEND + 1.7, JEND + 2.55))})`; $('line').style.opacity = seg(t, JEND + 1.7, JEND + 1.8);
     $('shine').style.backgroundPosition = `${130 - 160 * easeInOut(seg(t, JEND + 2.1, JEND + 2.9))}% 0`;
+    captions(t);
     $('fade').style.opacity = Math.max(1 - seg(t, 0, .35), seg(t, DUR - .45, DUR));
   }
 
