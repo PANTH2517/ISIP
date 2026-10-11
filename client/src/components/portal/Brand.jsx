@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { BRAND } from '../../config/brand';
 
 /**
- * StartIn logo: a rocket launching over three rising milestones, on a navy tile. On navy surfaces pass `onDark`
+ * StartIn logo: a light bulb whose filament is a growing sapling (an idea nurtured into a venture), on a navy tile. On navy surfaces pass `onDark`
  * to set it on a light tile so the edge stays visible.
  */
 export function Emblem({ className = 'h-12 w-12', onDark = false }) {
