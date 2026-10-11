@@ -23,19 +23,19 @@ export default function PublicLayout({ children }) {
     <div className="flex min-h-full flex-col bg-white">
       <TopBar />
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2 lg:px-8">
           <Wordmark />
           <div className="hidden items-center gap-2 md:flex">
             <TextSize className="mr-2 flex" />
             {user ? (
-              <Link to="/dashboard" className="inline-flex items-center gap-2 rounded-md bg-indigo-700 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-800">
+              <Link to="/dashboard" className="inline-flex items-center gap-2 h-9 rounded-md bg-indigo-700 px-4 text-sm font-semibold text-white hover:bg-indigo-800">
                 <LayoutDashboard className="h-4 w-4" />Go to my dashboard
               </Link>
             ) : <>
-              <Link to="/login" className="inline-flex items-center gap-2 rounded-md border-2 border-indigo-700 px-4 py-1.5 text-sm font-semibold text-indigo-800 hover:bg-indigo-50">
+              <Link to="/login" className="inline-flex items-center gap-2 h-9 rounded-md border-2 border-indigo-700 px-4 text-sm font-semibold text-indigo-800 hover:bg-indigo-50">
                 <LogIn className="h-4 w-4" />Login
               </Link>
-              <Link to="/register" className="inline-flex items-center gap-2 rounded-md bg-saffron-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-saffron-600">
+              <Link to="/register" className="inline-flex items-center gap-2 h-9 rounded-md bg-saffron-500 px-4 text-sm font-semibold text-white shadow-sm hover:bg-saffron-600">
                 <UserPlus className="h-4 w-4" />Register
               </Link>
             </>}

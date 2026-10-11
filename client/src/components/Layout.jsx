@@ -188,7 +188,7 @@ export default function Layout() {
     <div className="flex h-full flex-col">
       <TopBar />
       <header className="shrink-0 border-b border-slate-200 bg-white">
-        <div className="flex items-center justify-between gap-4 px-4 py-2.5 lg:px-6">
+        <div className="flex items-center justify-between gap-4 px-4 py-2 lg:px-6">
           <div className="flex items-center gap-2">
             <button className="rounded p-2 text-indigo-900 hover:bg-slate-100 lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open menu">
               <Menu className="h-5 w-5" />
