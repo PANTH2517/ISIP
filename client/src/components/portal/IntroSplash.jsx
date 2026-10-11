@@ -21,7 +21,6 @@ function shouldShow() {
 export default function IntroSplash() {
   const [visible, setVisible] = useState(shouldShow);
   const [leaving, setLeaving] = useState(false);
-  const [showBrand, setShowBrand] = useState(false);
   const [progress, setProgress] = useState(0);
   const videoRef = useRef(null);
   const skipRef = useRef(null);
@@ -37,7 +36,6 @@ export default function IntroSplash() {
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     skipRef.current?.focus();
-    const brandTimer = setTimeout(() => setShowBrand(true), 1800);
     const maxTimer = setTimeout(finish, MAX_MS);
     const onKey = (e) => { if (e.key === 'Escape') finish(); };
     window.addEventListener('keydown', onKey);
@@ -46,7 +44,6 @@ export default function IntroSplash() {
     if (played && typeof played.catch === 'function') played.catch(finish);
     return () => {
       document.body.style.overflow = prevOverflow;
-      clearTimeout(brandTimer);
       clearTimeout(maxTimer);
       window.removeEventListener('keydown', onKey);
     };
@@ -62,11 +59,11 @@ export default function IntroSplash() {
       aria-modal="true"
       aria-label={`${BRAND.name} intro`}
     >
+      {/* Landscape screens are filled; portrait phones show the whole widescreen frame so the title isn't cropped. */}
       <video
         ref={videoRef}
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-contain landscape:object-cover"
         src="/intro.mp4"
-        poster="/intro-poster.jpg"
         muted
         playsInline
         preload="auto"
@@ -75,19 +72,11 @@ export default function IntroSplash() {
         onError={finish}
         onTimeUpdate={(e) => setProgress(e.currentTarget.duration ? e.currentTarget.currentTime / e.currentTarget.duration : 0)}
       />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-[#0a1b38] via-[#0a1b38]/70 to-transparent" />
-
-      <div className={`absolute inset-x-0 bottom-16 flex flex-col items-center px-6 text-center transition-all duration-1000 ${showBrand ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
-        <img src="/logo.svg" alt="" className="h-24 w-24 rounded-3xl bg-white p-1 shadow-lg shadow-black/30" />
-        <p className="mt-4 font-display text-4xl font-bold tracking-tight text-white sm:text-5xl">{BRAND.name}</p>
-        <p className="mt-2 max-w-md text-sm text-indigo-100 sm:text-base">{BRAND.fullName}</p>
-      </div>
-
       <button
         ref={skipRef}
         type="button"
         onClick={finish}
-        className="absolute bottom-5 right-5 rounded-full border border-white/30 bg-[#0a1b38]/80 px-4 py-2 text-sm font-semibold text-white backdrop-blur hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        className="absolute right-5 top-5 rounded-full border border-white/30 bg-[#0a1b38]/80 px-4 py-2 text-sm font-semibold text-white backdrop-blur hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
       >
         Skip intro
       </button>
