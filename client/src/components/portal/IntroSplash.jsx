@@ -59,10 +59,10 @@ export default function IntroSplash() {
       aria-modal="true"
       aria-label={`${BRAND.name} intro`}
     >
-      {/* Landscape screens are filled; portrait phones show the whole widescreen frame so the title isn't cropped. */}
+      {/* Always show the whole frame at its own aspect ratio: nothing is cropped or zoomed. */}
       <video
         ref={videoRef}
-        className="absolute inset-0 h-full w-full object-contain landscape:object-cover"
+        className="absolute inset-0 h-full w-full object-contain"
         src="/intro.mp4"
         muted
         playsInline
@@ -76,9 +76,10 @@ export default function IntroSplash() {
         ref={skipRef}
         type="button"
         onClick={finish}
-        className="absolute right-5 top-5 rounded-full border border-white/30 bg-[#0a1b38]/80 px-4 py-2 text-sm font-semibold text-white backdrop-blur hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        aria-label="Skip intro"
+        className="absolute right-3 top-3 rounded px-2 py-1 text-[11px] font-medium text-white/40 transition hover:bg-white/10 hover:text-white focus:outline-none focus-visible:text-white focus-visible:ring-1 focus-visible:ring-white/60"
       >
-        Skip intro
+        Skip
       </button>
       <div className="absolute inset-x-0 bottom-0 h-1 bg-white/10" aria-hidden="true">
         <div className="h-full bg-gradient-to-r from-saffron-400 to-saffron-600 transition-[width] duration-200 ease-linear" style={{ width: `${Math.round(progress * 100)}%` }} />
